@@ -1,41 +1,41 @@
 `include "Definition.v"
 
 module Regfile (
-	input  wire				clk,
-	input  wire 			rst,
-	input  wire 			rdy,
+	input  wire					clk,
+	input  wire 				rst,
+	input  wire 				rdy,
 
-	input  wire 			clr,
+	input  wire 				clr,
 
 	//ID
-	input  wire 			ID_rs1_S,
-	input  wire[`RegBus] 	ID_rs1,
-	input  wire 			ID_rs2_S,
-	input  wire[`RegBus] 	ID_rs2,
+	input  wire 				ID_rs1_S,
+	input  wire	[`RegBus] 		ID_rs1,
+	input  wire 				ID_rs2_S,
+	input  wire	[`RegBus] 		ID_rs2,
 
 	//Dispatch
-	output reg				Dispatch_rs1_S,
-	output reg				Dispatch_rs1_type,
-	output reg[`DataBus] 	Dispatch_rs1_value,
-	output reg				Dispatch_rs2_S,
-	output reg				Dispatch_rs2_type,
-	output reg[`DataBus]	Dispatch_rs2_value,
-	input  wire				Dispatch_writeQ_S,
-	input  wire[`RegBus]	Dispatch_rd,
-	input  wire[`ROBBus]	Dispatch_ROBpos,
+	output	reg					Dispatch_rs1_S,
+	output	reg					Dispatch_rs1_type,
+	output	reg	[`DataBus] 		Dispatch_rs1_value,
+	output	reg					Dispatch_rs2_S,
+	output	reg					Dispatch_rs2_type,
+	output	reg	[`DataBus]		Dispatch_rs2_value,
+	input  wire					Dispatch_writeQ_S,
+	input  wire	[`RegBus]		Dispatch_rd,
+	input  wire	[`ROBBus]		Dispatch_ROBpos,
 
 	//ROB
-	input  wire				ROB_write_S,
-	input  wire[`RegBus] 	ROB_rd,
-	input  wire[`ROBBus]	ROB_Reorder,
-	input  wire[`DataBus]	ROB_result
+	input  wire					ROB_write_S,
+	input  wire	[`RegBus] 		ROB_rd,
+	input  wire	[`ROBBus]		ROB_Reorder,
+	input  wire	[`DataBus]		ROB_result
 );
 
-reg[`DataBus]				V[`RegBus];
-reg[`RSBus]					Q[`RegBus];
-reg 						T[`RegBus];
+reg	[`DataBus]					V[`RegBus];
+reg	[`RSBus]					Q[`RegBus];
+reg 							T[`RegBus];
 
-integer						i;
+integer							i;
 
 //send the information of 'rs1' to Dispatch
 always @(*) begin

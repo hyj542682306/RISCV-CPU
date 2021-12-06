@@ -2,20 +2,20 @@
 
 module ALU (
 	//ALU
-	output reg  			CDB_ALU_S,
-	output reg[`ROBBus]		CDB_ALU_Reorder,
-	output reg[`DataBus]	CDB_ALU_Value,
-	output reg 				CDB_ALU_Jump_S,
-	output reg[`DataBus]	CDB_ALU_Jump,
+	output	reg  				CDB_ALU_S,
+	output	reg	[`ROBBus]		CDB_ALU_Reorder,
+	output	reg	[`DataBus]		CDB_ALU_Value,
+	output	reg 				CDB_ALU_Jump_S,
+	output	reg	[`DataBus]		CDB_ALU_Jump,
 
 	//RS
-	input  wire 			ALU_S,
-	input  wire[`OpBus]		Op,
-	input  wire[`DataBus]	Vj,
-	input  wire[`DataBus]	Vk,
-	input  wire[`RegBus]	Reorder,
-	input  wire[`DataBus]	A,
-	input  wire[`AddrBus]	pc
+	input  wire 				ALU_S,
+	input  wire	[`OpBus]		Op,
+	input  wire	[`DataBus]		Vj,
+	input  wire	[`DataBus]		Vk,
+	input  wire	[`RegBus]		Reorder,
+	input  wire	[`DataBus]		A,
+	input  wire	[`AddrBus]		pc
 );
 
 always @(*) begin

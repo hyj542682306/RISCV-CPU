@@ -1,67 +1,67 @@
 `include "Definition.v"
 
 module RS (
-	input  wire				clk,
-	input  wire				rst,
-	input  wire 			rdy,
+	input  wire					clk,
+	input  wire					rst,
+	input  wire 				rdy,
 
-	input  wire				clr,
+	input  wire					clr,
 
 	//RS
-	output reg				RS_nxt_full,
-	output reg[`RSBus]		RS_nxt_pos, //send it to Dispatch
-	output reg				RS_nxt_ready, //send it to Dispatch
-	output reg[`RSBus]		RS_nxt_ready_pos, //send it to Dispatch
+	output	reg					RS_nxt_full,
+	output	reg	[`RSBus]		RS_nxt_pos, //send it to Dispatch
+	output	reg					RS_nxt_ready, //send it to Dispatch
+	output	reg	[`RSBus]		RS_nxt_ready_pos, //send it to Dispatch
 
 	//ID
-	input  wire				ID_S,
+	input  wire					ID_S,
 
 	//Dispatch
-	input  wire				Dispatch_S,
-	input  wire[`RSBus]		Dispatch_pos,
-	input  wire[`OpBus]		Dispatch_Op,
-	input  wire[`DataBus]	Dispatch_A,
-	input  wire[`ROBBus]	Dispatch_Reorder,
-	input  wire[`AddrBus]	Dispatch_pc,
-	input  wire				Dispatch_Type_j,
-	input  wire[`DataBus]	Dispatch_Value_j,
-	input  wire 			Dispatch_Type_k,
-	input  wire[`DataBus]	Dispatch_Value_k,
-	input  wire				Dispatch_ready,
-	input  wire[`DataBus]	Dispatch_ready_pos,
+	input  wire					Dispatch_S,
+	input  wire	[`RSBus]		Dispatch_pos,
+	input  wire	[`OpBus]		Dispatch_Op,
+	input  wire	[`DataBus]		Dispatch_A,
+	input  wire	[`ROBBus]		Dispatch_Reorder,
+	input  wire	[`AddrBus]		Dispatch_pc,
+	input  wire					Dispatch_Type_j,
+	input  wire	[`DataBus]		Dispatch_Value_j,
+	input  wire 				Dispatch_Type_k,
+	input  wire	[`DataBus]		Dispatch_Value_k,
+	input  wire					Dispatch_ready,
+	input  wire	[`DataBus]		Dispatch_ready_pos,
 
 	//ALU
-	output reg				ALU_S,
-	output reg[`OpBus]		ALU_Op,
-	output reg[`DataBus]	ALU_Vj,
-	output reg[`DataBus]	ALU_Vk,
-	output reg[`ROBBus]		ALU_Reorder,
-	output reg[`DataBus]	ALU_A,
-	output reg[`AddrBus]	ALU_pc, 
-	input  wire				CDB_ALU_S,
-	input  wire[`ROBBus]	CDB_ALU_Reorder,
-	input  wire[`DataBus]	CDB_ALU_Value,
+	output	reg					ALU_S,
+	output	reg	[`OpBus]		ALU_Op,
+	output	reg	[`DataBus]		ALU_Vj,
+	output	reg	[`DataBus]		ALU_Vk,
+	output	reg	[`ROBBus]		ALU_Reorder,
+	output	reg	[`DataBus]		ALU_A,
+	output	reg	[`AddrBus]		ALU_pc, 
+	input  wire					CDB_ALU_S,
+	input  wire	[`ROBBus]		CDB_ALU_Reorder,
+	input  wire	[`DataBus]		CDB_ALU_Value,
 
 	//LSB
-	input  wire				CDB_LSB_S,
-	input  wire[`ROBBus]	CDB_LSB_Reorder,
-	input  wire[`DataBus]	CDB_LSB_Value
+	input  wire					CDB_LSB_S,
+	input  wire	[`ROBBus]		CDB_LSB_Reorder,
+	input  wire	[`DataBus]		CDB_LSB_Value
 );
 
-reg[`OpBus]					Opcode[`RSBus];
-reg							Tj[`RSBus];
-reg 						Tk[`RSBus];
-reg[`ROBBus]				Qj[`RSBus];
-reg[`ROBBus]				Qk[`RSBus];
-reg[`DataBus]				Vj[`RSBus];
-reg[`DataBus]				Vk[`RSBus];
-reg[`DataBus]				A[`RSBus];
-reg							Busy[`RSBus];
-reg[`ROBBus]				Reorder[`RSBus];
-reg[`AddrBus]				pc[`RSBus];
+reg	[`OpBus]					Opcode[`RSBus];
+reg								Tj[`RSBus];
+reg 							Tk[`RSBus];
+reg	[`ROBBus]					Qj[`RSBus];
+reg	[`ROBBus]					Qk[`RSBus];
+reg	[`DataBus]					Vj[`RSBus];
+reg	[`DataBus]					Vk[`RSBus];
+reg	[`DataBus]					A[`RSBus];
+reg								Busy[`RSBus];
+reg	[`ROBBus]					Reorder[`RSBus];
+reg	[`AddrBus]					pc[`RSBus];
 
-integer						i,j,k;
-integer						BusyNum;
+integer							i,j,k;
+integer							BusyNum;
 
 //whether RS is full
 always @(*) begin

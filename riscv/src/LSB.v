@@ -1,73 +1,73 @@
 `include "Definition.v"
 
 module LSB (
-	input  wire				clk,
-	input  wire 			rst,
-	input  wire 			rdy,
+	input  wire					clk,
+	input  wire 				rst,
+	input  wire 				rdy,
 
-	input  wire 			clr,
+	input  wire 				clr,
 
 	//Mem_ctrl
-	input  wire				Mem_success,
-	input  wire				Mem_type,
-	input  wire[`DataBus]	Mem_value,
-	output reg 				Mem_S,
-	output reg				Mem_op,
-	output reg[`AddrBus]	Mem_pc,
-	output reg[`InstLen]	Mem_len, 
+	input  wire					Mem_success,
+	input  wire	[`DataBus]		Mem_value,
+	output	reg 				Mem_S,
+	output	reg					Mem_op,
+	output	reg	[`AddrBus]		Mem_pc,
+	output	reg	[`InstLen]		Mem_len, 
 
 	//LSB
-	output reg				LSB_nxt_full,
-	output reg[`LSBBus]		LSB_nxt_pos, //send it to the Dispatch
-	output reg				CDB_LSB_S,
-	output reg[`ROBBus]		CDB_LSB_Reorder,
-	output reg[`DataBus]	CDB_LSB_Value,
+	output	reg					LSB_nxt_full,
+	output	reg	[`LSBBus]		LSB_nxt_pos, //send it to the Dispatch
+	output	reg					CDB_LSB_S,
+	output	reg	[`ROBBus]		CDB_LSB_Reorder,
+	output	reg	[`DataBus]		CDB_LSB_Value,
 
 	//ID
-	input  wire				ID_S,
+	input  wire					ID_S,
 
 	//Dispatch
-	input  wire				Dispatch_S,
-	input  wire[`OpBus]		Dispatch_Op,
-	input  wire[`DataBus]	Dispatch_A,
-	input  wire[`ROBBus]	Dispatch_Reorder,
-	input  wire[`AddrBus]	Dispatch_pc,
-	input  wire				Dispatch_Type_j,
-	input  wire[`DataBus]	Dispatch_Value_j,
-	input  wire 			Dispatch_Type_k,
-	input  wire[`DataBus]	Dispatch_Value_k,
+	input  wire					Dispatch_S,
+	input  wire	[`OpBus]		Dispatch_Op,
+	input  wire	[`DataBus]		Dispatch_A,
+	input  wire	[`ROBBus]		Dispatch_Reorder,
+	input  wire	[`AddrBus]		Dispatch_pc,
+	input  wire					Dispatch_Type_j,
+	input  wire	[`DataBus]		Dispatch_Value_j,
+	input  wire 				Dispatch_Type_k,
+	input  wire	[`DataBus]		Dispatch_Value_k,
 
 	//ROB
-	input  wire 			ROB_store_S,
-	input  wire[`ROBBus]	ROB_store_Reorder,
-	input  wire				ROB_Update1_S,
-	input  wire[`ROBBus]	ROB_Update1_Reorder,
-	input  wire[`DataBus]	ROB_Update1_Value,
-	input  wire				ROB_Update2_S,
-	input  wire[`ROBBus]	ROB_Update2_Reorder,
-	input  wire[`DataBus]	ROB_Update2_Value,
-	output reg 				ROB_load_S,
-	output reg[`ROBBus]		ROB_load_Reorder,
-	output reg[`DataBus]	ROB_load_Value
+	input  wire 				ROB_store_S,
+	input  wire	[`ROBBus]		ROB_store_Reorder,
+	input  wire					ROB_Update1_S,
+	input  wire	[`ROBBus]		ROB_Update1_Reorder,
+	input  wire	[`DataBus]		ROB_Update1_Value,
+	input  wire					ROB_Update2_S,
+	input  wire	[`ROBBus]		ROB_Update2_Reorder,
+	input  wire	[`DataBus]		ROB_Update2_Value,
+	output	reg 				ROB_load_S,
+	output	reg	[`ROBBus]		ROB_load_Reorder,
+	output	reg	[`DataBus]		ROB_load_Value
 );
 
-reg[`OpBus]					Opcode[`LSBBus];
-reg							Tj[`LSBBus];
-reg							Tk[`LSBBus];
-reg[`ROBBus]				Qj[`LSBBus];
-reg[`ROBBus]				Qk[`LSBBus];
-reg[`DataBus]				Vj[`LSBBus];
-reg[`DataBus]				Vk[`LSBBus];
-reg[`DataBus]				A[`LSBBus];
-reg 						Busy[`LSBBus];
-reg[`ROBBus]				Reorder[`LSBBus];
-reg[`AddrBus]				pc[`LSBBus];
-reg 						Commit[`LSBBus];
-reg[`LSBBus]				head;
-reg[`LSBBus]				tail;
+reg	[`OpBus]					Opcode[`LSBBus];
+reg								Tj[`LSBBus];
+reg								Tk[`LSBBus];
+reg	[`ROBBus]					Qj[`LSBBus];
+reg	[`ROBBus]					Qk[`LSBBus];
+reg	[`DataBus]					Vj[`LSBBus];
+reg	[`DataBus]					Vk[`LSBBus];
+reg	[`DataBus]					A[`LSBBus];
+reg 							Busy[`LSBBus];
+reg	[`ROBBus]					Reorder[`LSBBus];
+reg	[`AddrBus]					pc[`LSBBus];
+reg 							Commit[`LSBBus];
+reg	[`LSBBus]					head;
+reg	[`LSBBus]					tail;
 
-integer						i;
-integer						BusyNum;
+integer							i;
+integer							BusyNum;
+integer							CommitNum;
 
 //whether LSB is full
 always @(*) begin
@@ -92,6 +92,7 @@ end
 always @(posedge clk) begin
 	if (rst) begin
 		Mem_S<=`Disable;
+		CDB_LSB_S<=`Disable;
 		ROB_load_S<=`Disable;
 		for (i=0;i<`SIZE;i=i+1) begin
 			Busy[i]<=`False;
@@ -99,11 +100,17 @@ always @(posedge clk) begin
 		head<=0;
 		tail<=0;
 		BusyNum<=0;
+		CommitNum<=0;
 	end
 	else if (clr) begin
 		Mem_S<=`Disable;
+		CDB_LSB_S<=`Disable;
 		ROB_load_S<=`Disable;
-		//...
+		for (i=CommitNum;i<`SIZE;i=i+1) begin
+			Busy[head+i]<=`False;
+		end
+		tail<=head+CommitNum;
+		BusyNum<=CommitNum;
 	end
 	else if (rdy) begin
 		//update the information from ROB
@@ -140,6 +147,7 @@ always @(posedge clk) begin
 				if (Busy[i]) begin
 					if (ROB_store_Reorder==Reorder[i]) begin
 						Commit[i]<=`True;
+						CommitNum<=CommitNum+1'b1;
 					end
 				end
 			end
@@ -196,19 +204,180 @@ always @(posedge clk) begin
 			BusyNum<=BusyNum+1'b1;
 		end
 
-		//check the head of the queue
+		//check the head of the queuem,,,,,
 		if (Busy[head]) begin
 			case (Opcode[head])
+
 				`LB,`LH,`LW,`LBU,`LHU: begin
-					if (Tj[head]<=1'b0) begin
-						;
+					if (Tj[head]==1'b0) begin
+						case (Opcode[head])
+							`LB: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+
+									CDB_LSB_S<=`Enable;
+									CDB_LSB_Value<={{25{Mem_value[7]}},Mem_value[6:0]};
+
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b0;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=1'b1;
+									
+									CDB_LSB_S<=`Disable;
+								end
+							end
+							`LH: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+
+									CDB_LSB_S<=`Enable;
+									CDB_LSB_Value<={{17{Mem_value[15]}},Mem_value[14:0]};
+
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b0;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=2'b10;
+									
+									CDB_LSB_S<=`Disable;
+								end
+							end
+							`LW: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+
+									CDB_LSB_S<=`Enable;
+									CDB_LSB_Value<=Mem_value;
+
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b0;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=3'b100;
+									
+									CDB_LSB_S<=`Disable;
+								end
+							end
+							`LBU: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+
+									CDB_LSB_S<=`Enable;
+									CDB_LSB_Value<=Mem_value;
+
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b0;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=1'b1;
+									
+									CDB_LSB_S<=`Disable;
+								end
+							end
+							`LHU: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+
+									CDB_LSB_S<=`Enable;
+									CDB_LSB_Value<=Mem_value;
+
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b0;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=2'b10;
+
+									CDB_LSB_S<=`Disable;
+								end
+							end
+						endcase
 					end
-				end 
-				`SB,`SW,`SH: begin
-					if (Commit[head]) begin
-						;
+					else begin
+						Mem_S<=`Disable;
+						CDB_LSB_S<=`Disable;
 					end
 				end
+
+				`SB,`SW,`SH: begin
+					CDB_LSB_S<=`Disable;
+					if (Commit[head]) begin
+						case (Opcode[head])
+							`SB: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									Commit[head]<=`False;
+									CommitNum<=CommitNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b1;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=1'b1;
+								end
+							end
+							`SW: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									Commit[head]<=`False;
+									CommitNum<=CommitNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b1;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=2'b10;
+								end
+							end
+							`SH: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1;
+									Commit[head]<=`False;
+									CommitNum<=CommitNum-1'b1;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b1;
+									Mem_pc<=Vj[head]+A[head];
+									Mem_len<=3'b100;
+								end
+							end
+						endcase
+					end
+					else begin
+						Mem_S<=`Disable;
+					end
+				end
+
 			endcase
 		end
 	end

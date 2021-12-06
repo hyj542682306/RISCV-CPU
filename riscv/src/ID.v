@@ -2,36 +2,36 @@
 
 module ID (
 	//IQ
-	input  wire				IQ_Empty,
-	input  wire[`InstBus]	IQ_Inst,
-	input  wire[`AddrBus]	IQ_pc,
-	output reg  			IQ_Success,
+	input  wire					IQ_Empty,
+	input  wire	[`InstBus]		IQ_Inst,
+	input  wire	[`AddrBus]		IQ_pc,
+	output	reg  				IQ_Success,
 
 	//Regfile
-	output reg  			Reg_rs1_S,
-	output reg[`RegBus] 	Reg_rs1,
-	output reg  			Reg_rs2_S,
-	output reg[`RegBus] 	Reg_rs2,
+	output	reg  				Reg_rs1_S,
+	output	reg	[`RegBus] 		Reg_rs1,
+	output	reg  				Reg_rs2_S,
+	output	reg	[`RegBus] 		Reg_rs2,
 
 	//Dispatch
-	output reg				Dispatch_S,
-	output reg				Dispatch_A,
-	output reg				Dispatch_rd,
-	output reg[`OpBus]		Dispatch_Op,
-	output reg[`AddrBus]	Dispatch_pc,
+	output	reg					Dispatch_S,
+	output	reg					Dispatch_A,
+	output	reg					Dispatch_rd,
+	output	reg	[`OpBus]		Dispatch_Op,
+	output	reg	[`AddrBus]		Dispatch_pc,
 
 	//ROB
-	input  wire				ROB_Full,
-	input  wire[`ROBBus]	ROB_pos,
-	output reg				ROB_S,
+	input  wire					ROB_Full,
+	input  wire	[`ROBBus]		ROB_pos,
+	output	reg					ROB_S,
 
 	//RS
-	input  wire				RS_Full,
-	output reg				RS_S,
+	input  wire					RS_Full,
+	output	reg					RS_S,
 
 	//LSB
-	input  wire 			LSB_Full,
-	output reg				LSB_S
+	input  wire 				LSB_Full,
+	output	reg					LSB_S
 );
 
 always @(*) begin

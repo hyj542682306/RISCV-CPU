@@ -1,75 +1,75 @@
 `include "Definition.v"
 
 module ROB (
-	input  wire 			clk,
-	input  wire 			rst,
-	input  wire 			rdy,
+	input  wire 				clk,
+	input  wire 				rst,
+	input  wire 				rdy,
 
 	//ROB
-	output reg 				ROB_nxt_full,
-	output reg 				clr,
-	output reg[`ROBBus]		ROB_nxt_pos, //send it to Dispatch
+	output	reg 				ROB_nxt_full,
+	output	reg 				clr,
+	output	reg	[`ROBBus]		ROB_nxt_pos, //send it to Dispatch
 
 	//IF
-	output reg				IF_Jump_S,
-	output reg[`AddrBus]	IF_Jump,
+	output	reg					IF_Jump_S,
+	output	reg	[`AddrBus]		IF_Jump,
 
 	//ID
-	input  wire				ID_S,
+	input  wire					ID_S,
 
 	//Dispatch
-	input  wire				Dispatch_S,
-	input  wire[`OpBus]		Dispatch_Op,
-	input  wire[`RegBus]	Dispatch_rd,
-	input  wire[`AddrBus]	Dispatch_pc,
-	input  wire				Dispatch_rs1_S,
-	input  wire[`ROBBus]	Dispatch_rs1_Reorder,
-	input  wire 			Dispatch_rs2_S,
-	input  wire[`ROBBus]	Dispatch_rs2_Reorder,
-	output reg				Dispatch_rs1_already,
-	output reg[`DataBus]	Dispatch_rs1_value,
-	output reg				Dispatch_rs2_already,
-	output reg[`DataBus]	Dispatch_rs2_value,
+	input  wire					Dispatch_S,
+	input  wire	[`OpBus]		Dispatch_Op,
+	input  wire	[`RegBus]		Dispatch_rd,
+	input  wire	[`AddrBus]		Dispatch_pc,
+	input  wire					Dispatch_rs1_S,
+	input  wire	[`ROBBus]		Dispatch_rs1_Reorder,
+	input  wire 				Dispatch_rs2_S,
+	input  wire	[`ROBBus]		Dispatch_rs2_Reorder,
+	output	reg					Dispatch_rs1_already,
+	output	reg	[`DataBus]		Dispatch_rs1_value,
+	output	reg					Dispatch_rs2_already,
+	output	reg	[`DataBus]		Dispatch_rs2_value,
 
 	//ALU
-	input  wire				ALU_S,
-	input  wire[`ROBBus]	ALU_Reorder,
-	input  wire[`DataBus]	ALU_Value,
-	input  wire				ALU_Jump_S,
-	input  wire[`AddrBus]	ALU_Jump,
+	input  wire					ALU_S,
+	input  wire	[`ROBBus]		ALU_Reorder,
+	input  wire	[`DataBus]		ALU_Value,
+	input  wire					ALU_Jump_S,
+	input  wire	[`AddrBus]		ALU_Jump,
 
 	//Regfile
-	output reg				Reg_write_S,
-	output reg[`RegBus]		Reg_rd,
-	output reg[`ROBBus]		Reg_Reorder,
-	output reg[`DataBus]	Reg_result,
+	output	reg					Reg_write_S,
+	output	reg	[`RegBus]		Reg_rd,
+	output	reg	[`ROBBus]		Reg_Reorder,
+	output	reg	[`DataBus]		Reg_result,
 
 	//LSB
-	input  wire 			LSB_load_S,
-	input  wire[`ROBBus]	LSB_load_Reorder,
-	input  wire[`DataBus]	LSB_load_Value,
-	output reg				LSB_store_S,
-	output reg[`ROBBus]		LSB_store_Reorder,
-	output reg				LSB_Update1_S,
-	output reg[`ROBBus]		LSB_Update1_Reorder,
-	output reg[`DataBus]	LSB_Update1_Value,
-	output reg 				LSB_Update2_S,
-	output reg[`ROBBus]		LSB_Update2_Reorder,
-	output reg[`DataBus]	LSB_Update2_Value
+	input  wire 				LSB_load_S,
+	input  wire	[`ROBBus]		LSB_load_Reorder,
+	input  wire	[`DataBus]		LSB_load_Value,
+	output	reg					LSB_store_S,
+	output	reg	[`ROBBus]		LSB_store_Reorder,
+	output	reg					LSB_Update1_S,
+	output	reg	[`ROBBus]		LSB_Update1_Reorder,
+	output	reg	[`DataBus]		LSB_Update1_Value,
+	output	reg 				LSB_Update2_S,
+	output	reg	[`ROBBus]		LSB_Update2_Reorder,
+	output	reg	[`DataBus]		LSB_Update2_Value
 );
 
-reg[`OpBus]					Opcode[`ROBBus];
-reg[`RegBus]				Dest[`ROBBus];
-reg[`DataBus]				Value[`ROBBus];
-reg							Jump_S[`ROBBus];
-reg[`AddrBus]				Jump[`ROBBus];
-reg[`AddrBus]				pc[`ROBBus];
-reg							Ready[`ROBBus];
-reg[`ROBBus]				head;
-reg[`ROBBus]				tail;
-reg							empty;
+reg	[`OpBus]					Opcode[`ROBBus];
+reg	[`RegBus]					Dest[`ROBBus];
+reg	[`DataBus]					Value[`ROBBus];
+reg								Jump_S[`ROBBus];
+reg	[`AddrBus]					Jump[`ROBBus];
+reg	[`AddrBus]					pc[`ROBBus];
+reg								Ready[`ROBBus];
+reg	[`ROBBus]					head;
+reg	[`ROBBus]					tail;
+reg								empty;
 
-integer 					i;
+integer 						i;
 
 //find the nxtpos and send it to Dispatch
 always @(*) begin

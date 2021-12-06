@@ -1,32 +1,32 @@
 `include "Definition.v"
 
 module IQ (
-	input  wire				clk,
-	input  wire				rst,  
-	input  wire 			rdy,
+	input  wire					clk,
+	input  wire					rst,  
+	input  wire 				rdy,
 
-	input  wire 			clr,
+	input  wire 				clr,
 
 	//IQ
-	output reg				IQ_empty,
-	output reg				IQ_nxt_full,
+	output	reg					IQ_empty,
+	output	reg					IQ_nxt_full,
 
 	//IF
-	input  wire				IF_S,
-	input  wire[`InstBus]	IF_Inst,
-	input  wire[`AddrBus]	IF_pc,
+	input  wire					IF_S,
+	input  wire	[`InstBus]		IF_Inst,
+	input  wire	[`AddrBus]		IF_pc,
 
 	//ID
-	input  wire				ID_Success,
-	output reg[`InstBus]	ID_Inst,
-	output reg[`AddrBus]	ID_pc 
+	input  wire					ID_Success,
+	output	reg	[`InstBus]		ID_Inst,
+	output	reg	[`AddrBus]		ID_pc 
 );
 
-reg[`InstBus]				Inst_queue[`IQBus];
-reg[`AddrBus]				pc_queue[`IQBus];
-reg[`IQBus]					head;
-reg[`IQBus]					tail;
-reg							empty;
+reg	[`InstBus]					Inst_queue[`IQBus];
+reg	[`AddrBus]					pc_queue[`IQBus];
+reg	[`IQBus]					head;
+reg	[`IQBus]					tail;
+reg								empty;
 
 always @(posedge clk) begin
 	if (rst||clr) begin
