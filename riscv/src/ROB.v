@@ -50,7 +50,12 @@ module ROB (
 	input  wire[`DataBus]	LSB_load_Value,
 	output reg				LSB_store_S,
 	output reg[`ROBBus]		LSB_store_Reorder,
-	output reg[`DataBus]	LSB_store_Value
+	output reg				LSB_Update1_S,
+	output reg[`ROBBus]		LSB_Update1_Reorder,
+	output reg[`DataBus]	LSB_Update1_Value,
+	output reg 				LSB_Update2_S,
+	output reg[`ROBBus]		LSB_Update2_Reorder,
+	output reg[`DataBus]	LSB_Update2_Value
 );
 
 reg[`OpBus]					Opcode[`ROBBus];
@@ -127,6 +132,8 @@ always @(posedge clk) begin
 		IF_Jump_S<=`Disable;
 		Reg_write_S<=`Disable;
 		LSB_store_S<=`Disable;
+		LSB_Update1_S<=`Disable;
+		LSB_Update2_S<=`Disable;
 	end
 	else if (clr) begin
 		head<=0;
@@ -145,6 +152,8 @@ always @(posedge clk) begin
 		IF_Jump_S<=`Disable;
 		Reg_write_S<=`Disable;
 		LSB_store_S<=`Disable;
+		LSB_Update1_S<=`Disable;
+		LSB_Update2_S<=`Disable;
 	end
 	else if (rdy) begin
 		ROB_nxt_full<=head+((!empty)&&Ready[head])==tail+Dispatch_S&&(!empty);
@@ -174,10 +183,22 @@ always @(posedge clk) begin
 			Jump_S[ALU_Reorder]<=ALU_Jump_S;
 			Jump[ALU_Reorder]<=ALU_Jump;
 			Ready[ALU_Reorder]<=`True;
+			LSB_Update1_S<=`Enable;
+			LSB_Update1_Reorder<=ALU_Reorder;
+			LSB_Update1_Value<=ALU_Value;
+		end
+		else begin
+			LSB_Update1_S<=`Disable;
 		end
 		if (LSB_load_S) begin
 			Value[LSB_load_Reorder]<=LSB_load_Value;
 			Ready[LSB_load_Reorder]<=`True;
+			LSB_Update2_S<=`Enable;
+			LSB_Update2_Reorder<=LSB_load_Reorder;
+			LSB_Update2_Value<=LSB_load_Value;
+		end
+		else begin
+			LSB_Update2_S<=`Disable;
 		end
 
 		//commit
@@ -221,7 +242,6 @@ always @(posedge clk) begin
 
 					LSB_store_S<=`Enable;
 					LSB_store_Reorder<=head;
-					LSB_store_Value<=Value[head];
 				end
 
 				default: begin
@@ -247,6 +267,8 @@ always @(posedge clk) begin
 		IF_Jump_S<=`Disable;
 		Reg_write_S<=`Disable;
 		LSB_store_S<=`Disable;
+		LSB_Update1_S<=`Disable;
+		LSB_Update2_S<=`Disable;
 	end
 end
 

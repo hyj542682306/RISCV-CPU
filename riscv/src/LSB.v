@@ -37,18 +37,18 @@ module LSB (
 	input  wire 			Dispatch_Type_k,
 	input  wire[`DataBus]	Dispatch_Value_k,
 
-	//ALU
-	input  wire				CDB_ALU_S,
-	input  wire[`ROBBus]	CDB_ALU_Reorder,
-	input  wire[`DataBus]	CDB_ALU_Value,
-
 	//ROB
 	input  wire 			ROB_store_S,
 	input  wire[`ROBBus]	ROB_store_Reorder,
-	input  wire[`DataBus]	ROB_store_Value,
+	input  wire				ROB_Update1_S,
+	input  wire[`ROBBus]	ROB_Update1_Reorder,
+	input  wire[`DataBus]	ROB_Update1_Value,
+	input  wire				ROB_Update2_S,
+	input  wire[`ROBBus]	ROB_Update2_Reorder,
+	input  wire[`DataBus]	ROB_Update2_Value,
 	output reg 				ROB_load_S,
 	output reg[`ROBBus]		ROB_load_Reorder,
-	output reg[`DataBus]	ROB_load_Value  
+	output reg[`DataBus]	ROB_load_Value
 );
 
 reg[`OpBus]					Opcode[`LSBBus];
@@ -79,7 +79,6 @@ always @(*) begin
 	end
 end
 
-
 //find the nxtpos and send it to Dispatch
 always @(*) begin
 	if (rst||clr||ID_S==`Disable) begin
@@ -102,10 +101,116 @@ always @(posedge clk) begin
 		BusyNum<=0;
 	end
 	else if (clr) begin
-		;
+		Mem_S<=`Disable;
+		ROB_load_S<=`Disable;
+		//...
 	end
 	else if (rdy) begin
-		//update the information from ALU
+		//update the information from ROB
+		if (ROB_Update1_S) begin
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (Busy[i]) begin
+					if (Tj[i]==1'b1&&Qj[i]==ROB_Update1_Reorder) begin
+						Tj[i]<=1'b0;
+						Vj[i]<=ROB_Update1_Value;
+					end
+					if (Tk[i]==1'b1&&Qk[i]==ROB_Update1_Reorder) begin
+						Tk[i]<=1'b0;
+						Vk[i]<=ROB_Update1_Value;
+					end
+				end
+			end
+		end
+		if (ROB_Update2_S) begin
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (Busy[i]) begin
+					if (Tj[i]==1'b1&&Qj[i]==ROB_Update2_Reorder) begin
+						Tj[i]<=1'b0;
+						Vj[i]<=ROB_Update2_Value;
+					end
+					if (Tk[i]==1'b1&&Qk[i]==ROB_Update2_Reorder) begin
+						Tk[i]<=1'b0;
+						Vk[i]<=ROB_Update2_Value;
+					end
+				end
+			end
+		end
+		if (ROB_store_S) begin
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (Busy[i]) begin
+					if (ROB_store_Reorder==Reorder[i]) begin
+						Commit[i]<=`True;
+					end
+				end
+			end
+		end
+
+		//add a new inst
+		if (Dispatch_S) begin
+			Busy[tail]<=`True;
+			Opcode[tail]<=Dispatch_Op;
+
+			if (Dispatch_Type_j==1'b0) begin
+				Tj[tail]<=1'b0;
+				Vj[tail]<=Dispatch_Value_j;
+			end
+			else begin
+				if (ROB_Update1_S&&Dispatch_Value_j==ROB_Update1_Reorder) begin
+					Tj[tail]<=1'b0;
+					Vj[tail]<=ROB_Update1_Value;
+				end
+				else if (ROB_Update2_S&&Dispatch_Value_j==ROB_Update2_Reorder) begin
+					Tj[tail]<=1'b0;
+					Vj[tail]<=ROB_Update2_Value;
+				end
+				else begin
+					Tj[tail]<=1'b1;
+					Qj[tail]<=Dispatch_Value_j;
+				end
+			end
+
+			if (Dispatch_Type_k==1'b0) begin
+				Tk[tail]<=1'b0;
+				Vk[tail]<=Dispatch_Value_k;
+			end
+			else begin
+				if (ROB_Update1_S&&Dispatch_Value_k==ROB_Update1_Reorder) begin
+					Tk[tail]<=1'b0;
+					Vk[tail]<=ROB_Update1_Value;
+				end
+				else if (ROB_Update2_S&&Dispatch_Value_k==ROB_Update2_Reorder) begin
+					Tk[tail]<=1'b0;
+					Vk[tail]<=ROB_Update2_Value;
+				end
+				else begin
+					Tk[tail]<=1'b1;
+					Qk[tail]<=Dispatch_Value_k;
+				end
+			end
+
+			A[tail]<=Dispatch_A;
+			Reorder[tail]<=Dispatch_Reorder;
+			pc[tail]<=Dispatch_pc;
+			Commit[tail]<=`False;
+			tail<=tail+1'b1;
+			BusyNum<=BusyNum+1'b1;
+		end
+
+		//check the head of the queue
+		if (Busy[head]) begin
+			case (Opcode[head])
+				`LB,`LH,`LW,`LBU,`LHU: begin
+					if (Tj[head]<=1'b0) begin
+						;
+					end
+				end 
+				`SB,`SW,`SH: begin
+					if (Commit[head]) begin
+						;
+					end
+				end
+			endcase
+		end
 	end
 	else begin
 		Mem_S<=`Disable;

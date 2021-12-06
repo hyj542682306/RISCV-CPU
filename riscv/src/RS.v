@@ -95,8 +95,31 @@ always @(*) begin
 	else begin
 		for (k=0;k<`SIZE;k=k+1) begin
 			if (Busy[k]) begin
-				RS_nxt_ready=`True;
-				RS_nxt_ready_pos=k;
+				case (Opcode[k])
+					`LUI,`AUIPC,`JAL: begin
+						RS_nxt_ready=`Enable;
+						RS_nxt_ready_pos=k;
+					end
+					`JALR,`ADDI,`SLTI,`SLTIU,`XORI,`ORI,`ANDI,`SLLI,`SRLI,`SRAI: begin
+						if (Tj[k]==1'b0) begin
+							RS_nxt_ready=`Enable;
+							RS_nxt_ready_pos=k;
+						end
+						else begin
+							RS_nxt_ready=`Disable;
+						end
+					end
+					`BEQ,`BNE,`BLT,`BGE,`BLTU,`BGEU,`ADD,`SUB,`SLL,`SLT,`SLTU,`XOR,`SRL,`SRA,`OR,`AND: begin
+						if (Tj[k]==1'b0&&Tk[k]==1'b0) begin
+							RS_nxt_ready=`Enable;
+							RS_nxt_ready_pos=k;
+						end
+						else begin
+							RS_nxt_ready=`Disable;
+						end
+					end
+					default: RS_nxt_ready=`Disable;
+				endcase
 			end
 		end
 	end
