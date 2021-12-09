@@ -1,16 +1,16 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module Dispatch (
 	//ID
 	input  wire					Dispatch_S,
-	input  wire					A,
-	input  wire 				rd,
+	input  wire	[`DataBus]		A,
+	input  wire [`RegBus]		rd,
 	input  wire	[`OpBus] 		Op,
 	input  wire	[`AddrBus]		pc,
 
 	//Dispatch
-	output	reg					Dispatch_Op,
-	output	reg					Dispatch_A,
+	output	reg	[`OpBus]		Dispatch_Op,
+	output	reg	[`DataBus]		Dispatch_A,
 	output	reg	[`RegBus]		Dispatch_rd,
 	output	reg	[`ROBBus]		Dispatch_Reorder,
 	output	reg	[`AddrBus]		Dispatch_pc,
@@ -24,8 +24,8 @@ module Dispatch (
 	input  wire 				rs1_type,
 	input  wire	[`DataBus]		rs1_value,
 	input  wire 				rs2_S,
-	input  wire	[`DataBus]		rs2_type,
-	input  wire 				rs2_value,
+	input  wire					rs2_type,
+	input  wire [`DataBus]		rs2_value,
 	output	reg					Reg_writeQ_S,
 
 	//RS - S,pos,Op,A,Reorder,pc
@@ -56,6 +56,7 @@ module Dispatch (
 
 always @(*) begin
 	if (Dispatch_S) begin
+		// $display("Dispatch INST: %b; PC: %h",Op,pc);
 		//Dispatch
 		Dispatch_Op=Op;
 		Dispatch_A=A;
@@ -94,7 +95,7 @@ always @(*) begin
 			else begin
 				ROB_rs2_S=`Enable;
 				ROB_rs2_Reorder=rs2_value;
-				if (ROB_rs1_already) begin
+				if (ROB_rs2_already) begin
 					Dispatch_Type_k=1'b0;
 					Dispatch_Value_k=ROB_rs2_value;
 				end
@@ -110,15 +111,27 @@ always @(*) begin
 		end
 
 		//Reg
-		Reg_writeQ_S=`Enable;
+		if (Op==`SB||Op==`SH||Op==`SW||Op==`BEQ||Op==`BNE||Op==`BLT||Op==`BGE||Op==`BLTU||Op==`BGEU) begin
+			Reg_writeQ_S=`Disable;
+		end
+		else begin
+			Reg_writeQ_S=`Enable;
+		end
 
-		//RS
-		RS_S=`Enable;
-		RS_ready=RS_las_ready;
-		RS_ready_pos=RS_las_ready;
-
-		//LSB
-		LSB_S=`Enable;
+		//RS & LSB
+		if (Op==`LB||Op==`LH||Op==`LW||Op==`LBU||Op==`LHU||Op==`SB||Op==`SH||Op==`SW) begin
+			LSB_S=`Enable;
+			RS_S=`Disable;
+			RS_ready=RS_las_ready;
+			RS_ready_pos=RS_las_ready_pos;
+		end
+		else begin
+			LSB_S=`Disable;
+			RS_S=`Enable;
+			RS_pos<=RS_las_pos;
+			RS_ready=RS_las_ready;
+			RS_ready_pos=RS_las_ready;
+		end
 
 		//ROB
 		ROB_S=`Enable;

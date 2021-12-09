@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module RS (
 	input  wire					clk,
@@ -48,17 +48,17 @@ module RS (
 	input  wire	[`DataBus]		CDB_LSB_Value
 );
 
-reg	[`OpBus]					Opcode[`RSBus];
-reg								Tj[`RSBus];
-reg 							Tk[`RSBus];
-reg	[`ROBBus]					Qj[`RSBus];
-reg	[`ROBBus]					Qk[`RSBus];
-reg	[`DataBus]					Vj[`RSBus];
-reg	[`DataBus]					Vk[`RSBus];
-reg	[`DataBus]					A[`RSBus];
-reg								Busy[`RSBus];
-reg	[`ROBBus]					Reorder[`RSBus];
-reg	[`AddrBus]					pc[`RSBus];
+reg	[`OpBus]					Opcode[`RSSize];
+reg								Tj[`RSSize];
+reg 							Tk[`RSSize];
+reg	[`ROBBus]					Qj[`RSSize];
+reg	[`ROBBus]					Qk[`RSSize];
+reg	[`DataBus]					Vj[`RSSize];
+reg	[`DataBus]					Vk[`RSSize];
+reg	[`DataBus]					A[`RSSize];
+reg								Busy[`RSSize];
+reg	[`ROBBus]					Reorder[`RSSize];
+reg	[`AddrBus]					pc[`RSSize];
 
 integer							i,j,k;
 integer							BusyNum;
@@ -93,32 +93,33 @@ always @(*) begin
 		RS_nxt_ready=`False;
 	end
 	else begin
+		RS_nxt_ready=`False;
 		for (k=0;k<`SIZE;k=k+1) begin
-			if (Busy[k]) begin
+			if (Busy[k]&&RS_nxt_ready==`False) begin
 				case (Opcode[k])
 					`LUI,`AUIPC,`JAL: begin
-						RS_nxt_ready=`Enable;
+						RS_nxt_ready=`True;
 						RS_nxt_ready_pos=k;
 					end
 					`JALR,`ADDI,`SLTI,`SLTIU,`XORI,`ORI,`ANDI,`SLLI,`SRLI,`SRAI: begin
 						if (Tj[k]==1'b0) begin
-							RS_nxt_ready=`Enable;
+							RS_nxt_ready=`True;
 							RS_nxt_ready_pos=k;
 						end
 						else begin
-							RS_nxt_ready=`Disable;
+							RS_nxt_ready=`False;
 						end
 					end
 					`BEQ,`BNE,`BLT,`BGE,`BLTU,`BGEU,`ADD,`SUB,`SLL,`SLT,`SLTU,`XOR,`SRL,`SRA,`OR,`AND: begin
 						if (Tj[k]==1'b0&&Tk[k]==1'b0) begin
-							RS_nxt_ready=`Enable;
+							RS_nxt_ready=`True;
 							RS_nxt_ready_pos=k;
 						end
 						else begin
-							RS_nxt_ready=`Disable;
+							RS_nxt_ready=`False;
 						end
 					end
-					default: RS_nxt_ready=`Disable;
+					default: RS_nxt_ready=`False;
 				endcase
 			end
 		end
@@ -181,17 +182,17 @@ always @(posedge clk) begin
 				Vj[Dispatch_pos]<=Dispatch_Value_j;
 			end
 			else begin
-				if (CDB_ALU_S&&Dispatch_Value_j==CDB_ALU_Reorder) begin
+				if (CDB_ALU_S&&Dispatch_Value_j[`ROBBus]==CDB_ALU_Reorder) begin
 					Tj[Dispatch_pos]<=1'b0;
 					Vj[Dispatch_pos]<=CDB_ALU_Value;
 				end
-				else if (CDB_LSB_S&&Dispatch_Value_j==CDB_LSB_Reorder) begin
+				else if (CDB_LSB_S&&Dispatch_Value_j[`ROBBus]==CDB_LSB_Reorder) begin
 					Tj[Dispatch_pos]<=1'b0;
 					Vj[Dispatch_pos]<=CDB_LSB_Value;
 				end
 				else begin
 					Tj[Dispatch_pos]<=1'b1;
-					Qj[Dispatch_pos]<=Dispatch_Value_j;
+					Qj[Dispatch_pos]<=Dispatch_Value_j[`ROBBus];
 				end
 			end
 
@@ -200,17 +201,17 @@ always @(posedge clk) begin
 				Vk[Dispatch_pos]<=Dispatch_Value_k;
 			end
 			else begin
-				if (CDB_ALU_S&&Dispatch_Value_k==CDB_ALU_Reorder) begin
+				if (CDB_ALU_S&&Dispatch_Value_k[`ROBBus]==CDB_ALU_Reorder) begin
 					Tk[Dispatch_pos]<=1'b0;
 					Vk[Dispatch_pos]<=CDB_ALU_Value;
 				end
-				else if (CDB_LSB_S&&Dispatch_Value_k==CDB_LSB_Reorder) begin
+				else if (CDB_LSB_S&&Dispatch_Value_k[`ROBBus]==CDB_LSB_Reorder) begin
 					Tk[Dispatch_pos]<=1'b0;
 					Vk[Dispatch_pos]<=CDB_LSB_Value;
 				end
 				else begin
 					Tk[Dispatch_pos]<=1'b1;
-					Qk[Dispatch_pos]<=Dispatch_Value_k;
+					Qk[Dispatch_pos]<=Dispatch_Value_k[`ROBBus];
 				end
 			end
 

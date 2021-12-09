@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module IQ (
 	input  wire					clk,
@@ -8,52 +8,51 @@ module IQ (
 	input  wire 				clr,
 
 	//IQ
-	output	reg					IQ_empty,
-	output	reg					IQ_nxt_full,
+	output	reg					IQ_full,
 
 	//IF
 	input  wire					IF_S,
 	input  wire	[`InstBus]		IF_Inst,
 	input  wire	[`AddrBus]		IF_pc,
 
+	output reg [`InstBus]		dfdf,
+	output reg [`InstBus]		pkpk,
+	output reg [`InstBus]		plpl,
+
 	//ID
 	input  wire					ID_Success,
+	output	reg					ID_S,
 	output	reg	[`InstBus]		ID_Inst,
 	output	reg	[`AddrBus]		ID_pc 
 );
 
-reg	[`InstBus]					Inst_queue[`IQBus];
-reg	[`AddrBus]					pc_queue[`IQBus];
+reg	[`InstBus]					Inst_queue[`IQSize];
+reg	[`AddrBus]					pc_queue[`IQSize];
 reg	[`IQBus]					head;
 reg	[`IQBus]					tail;
-reg								empty;
+
+integer							qSize;
+
+//whether the IQ is empty or full
+always @(*) begin
+	IQ_full<=(qSize==`SIZE);
+end
 
 always @(posedge clk) begin
 	if (rst||clr) begin
 		head<=0;
 		tail<=0;
-		empty<=`True;
-		IQ_empty<=`True;
-		IQ_nxt_full<=`False;
-		ID_Inst<=`Null;
-		ID_pc<=`Null;
+		qSize<=0;
+		ID_S<=`Disable;
 	end
 	else if (rdy) begin
-		IQ_empty<=empty;
-
-		//full - nxt clk / after this clk
-		IQ_nxt_full<=(head+ID_Success==tail+IF_S)&&(!empty);
-		//empty - nxt clk / after this clk
-		empty<=(head+ID_Success==tail+IF_S&&empty)
-			 ||(head+ID_Success==tail+IF_S&&ID_Success&&(!IF_S));
-
-		if (!empty) begin
-			ID_Inst<=Inst_queue[head];
-			ID_pc<=pc_queue[head];
+		if (qSize-ID_Success>0) begin
+			ID_S<=`Enable;
+			ID_Inst<=Inst_queue[head+ID_Success];
+			ID_pc<=pc_queue[head+ID_Success];
 		end
 		else begin
-			ID_Inst<=`Null;
-			ID_pc<=`Null;
+			ID_S<=`Disable;
 		end
 
 		if (ID_Success) begin
@@ -65,11 +64,11 @@ always @(posedge clk) begin
 			pc_queue[tail]<=IF_pc;
 			tail<=tail+1'b1;
 		end
+
+		qSize<=qSize+IF_S-ID_Success;
 	end
 	else begin
-		IQ_empty<=`True;
-		ID_Inst<=`Null;
-		ID_pc<=`Null;
+		ID_S<=`Disable;
 	end
 end
 

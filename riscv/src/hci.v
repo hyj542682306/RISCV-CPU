@@ -26,6 +26,11 @@
 ***************************************************************************************************/
 
 // modification allowed for debugging purposes
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/fifo/fifo.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/uart/uart_baud_clk.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/uart/uart_rx.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/uart/uart_tx.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/uart/uart.v"
 
 module hci
 #(

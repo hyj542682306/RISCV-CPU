@@ -1,8 +1,8 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module ID (
 	//IQ
-	input  wire					IQ_Empty,
+	input  wire					IQ_S,
 	input  wire	[`InstBus]		IQ_Inst,
 	input  wire	[`AddrBus]		IQ_pc,
 	output	reg  				IQ_Success,
@@ -15,14 +15,13 @@ module ID (
 
 	//Dispatch
 	output	reg					Dispatch_S,
-	output	reg					Dispatch_A,
-	output	reg					Dispatch_rd,
+	output	reg	[`DataBus]		Dispatch_A,
+	output	reg	[`RegBus]		Dispatch_rd,
 	output	reg	[`OpBus]		Dispatch_Op,
 	output	reg	[`AddrBus]		Dispatch_pc,
 
 	//ROB
 	input  wire					ROB_Full,
-	input  wire	[`ROBBus]		ROB_pos,
 	output	reg					ROB_S,
 
 	//RS
@@ -30,8 +29,7 @@ module ID (
 	output	reg					RS_S,
 
 	//LSB
-	input  wire 				LSB_Full,
-	output	reg					LSB_S
+	input  wire 				LSB_Full
 );
 
 always @(*) begin
@@ -43,15 +41,14 @@ always @(*) begin
 
 	ROB_S=`Disable;
 	RS_S=`Disable;
-	LSB_S=`Disable;
 
-	if (IQ_Empty==`True||RS_Full==`True||ROB_Full==`True||LSB_Full==`True) begin
+	if (IQ_S==`Disable||RS_Full==`True||ROB_Full==`True||LSB_Full==`True) begin
 		IQ_Success=`False;
 	end
 	else begin
+		//$display("Decode Inst: %h",IQ_Inst);
 		ROB_S=`Enable;
 		RS_S=`Enable;
-		LSB_S=`Enable;
 		IQ_Success=`True;
 		Dispatch_S=`Enable;
 		Dispatch_pc=IQ_pc;
@@ -136,7 +133,7 @@ always @(*) begin
 					3'b111: Dispatch_Op=`ANDI;
 					3'b001: Dispatch_Op=`SLLI;
 					3'b101: begin
-						case (IQ_Inst[31:26])
+						case (IQ_Inst[31:25])
 							7'b0000000: Dispatch_Op=`SRLI;
 							7'b0100000: Dispatch_Op=`SRAI;
 						endcase
@@ -151,7 +148,7 @@ always @(*) begin
 			7'b0110011: begin
 				case (IQ_Inst[14:12])
 					3'b000: begin
-						case (IQ_Inst[31:26])
+						case (IQ_Inst[31:25])
 							7'b0000000: Dispatch_Op=`ADD;
 							7'b0100000: Dispatch_Op=`SUB;
 						endcase
@@ -161,7 +158,7 @@ always @(*) begin
 					3'b011: Dispatch_Op=`SLTU;
 					3'b100: Dispatch_Op=`XOR;
 					3'b101: begin
-						case (IQ_Inst[31:26])
+						case (IQ_Inst[31:25])
 							7'b0000000: Dispatch_Op=`SRL;
 							7'b0100000: Dispatch_Op=`SRA;
 						endcase

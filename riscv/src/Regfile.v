@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module Regfile (
 	input  wire					clk,
@@ -31,15 +31,15 @@ module Regfile (
 	input  wire	[`DataBus]		ROB_result
 );
 
-reg	[`DataBus]					V[`RegBus];
-reg	[`RSBus]					Q[`RegBus];
-reg 							T[`RegBus];
+reg	[`DataBus]					V[`RegSize];
+reg	[`ROBBus]					Q[`RegSize];
+reg 							T[`RegSize];
 
 integer							i;
 
 //send the information of 'rs1' to Dispatch
 always @(*) begin
-	if (rst||clr||ID_rs1_S==`Disable) begin
+	if (ID_rs1_S==`Disable) begin
 		Dispatch_rs1_S=`Disable;
 	end
 	else begin
@@ -49,15 +49,21 @@ always @(*) begin
 			Dispatch_rs1_value=V[ID_rs1];
 		end
 		else begin
-			Dispatch_rs1_type=1'b1;
-			Dispatch_rs1_value={27'b0,Q[ID_rs1]};
+			if (ROB_write_S==`Enable&&ROB_Reorder==Q[ID_rs1]) begin
+				Dispatch_rs1_type=1'b0;
+				Dispatch_rs1_value=ROB_result;
+			end
+			else begin
+				Dispatch_rs1_type=1'b1;
+				Dispatch_rs1_value={27'b0,Q[ID_rs1]};
+			end
 		end
 	end
 end
 
 //send the information of 'rs2' to Dispatch
 always @(*) begin
-	if (rst||clr||ID_rs2_S==`Disable) begin
+	if (ID_rs2_S==`Disable) begin
 		Dispatch_rs2_S=`Disable;
 	end
 	else begin
@@ -67,8 +73,14 @@ always @(*) begin
 			Dispatch_rs2_value=V[ID_rs2];
 		end
 		else begin
-			Dispatch_rs2_type=1'b1;
-			Dispatch_rs2_value={27'b0,Q[ID_rs2]};
+			if (ROB_write_S==`Enable&&ROB_Reorder==Q[ID_rs2]) begin
+				Dispatch_rs2_type=1'b0;
+				Dispatch_rs2_value=ROB_result;
+			end
+			else begin
+				Dispatch_rs2_type=1'b1;
+				Dispatch_rs2_value={27'b0,Q[ID_rs2]};
+			end
 		end
 	end
 end
@@ -90,15 +102,25 @@ always @(posedge clk) begin
 		end
 	end
 	else if (rdy) begin
-		if (ROB_write_S==`Enable&&ROB_rd!=0) begin
+		if (ROB_write_S==`Enable&&ROB_rd!=0&&Dispatch_writeQ_S==`Enable&&Dispatch_rd!=0) begin
 			V[ROB_rd]<=ROB_result;
-			if (Q[ROB_rd]==ROB_Reorder) begin
+			if (ROB_rd!=Dispatch_rd&&Q[ROB_rd]==ROB_Reorder) begin
 				T[ROB_rd]<=1'b0;
 			end
-		end
-		if (Dispatch_writeQ_S==`Enable&&Dispatch_rd!=0) begin
 			Q[Dispatch_rd]<=Dispatch_ROBpos;
 			T[Dispatch_rd]<=1'b1;
+		end
+		else begin
+			if (ROB_write_S==`Enable&&ROB_rd!=0) begin
+				V[ROB_rd]<=ROB_result;
+				if (Q[ROB_rd]==ROB_Reorder) begin
+					T[ROB_rd]<=1'b0;
+				end
+			end
+			if (Dispatch_writeQ_S==`Enable&&Dispatch_rd!=0) begin
+				Q[Dispatch_rd]<=Dispatch_ROBpos;
+				T[Dispatch_rd]<=1'b1;
+			end
 		end
 	end
 end

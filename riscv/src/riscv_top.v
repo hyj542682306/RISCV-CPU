@@ -1,6 +1,8 @@
 // riscv top module file
 // modification allowed for debugging purposes
 
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/cpu.v"
+
 module riscv_top
 #(
 	parameter SIM = 0						// whether in simulation

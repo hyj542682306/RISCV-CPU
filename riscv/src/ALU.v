@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module ALU (
 	//ALU
@@ -13,7 +13,7 @@ module ALU (
 	input  wire	[`OpBus]		Op,
 	input  wire	[`DataBus]		Vj,
 	input  wire	[`DataBus]		Vk,
-	input  wire	[`RegBus]		Reorder,
+	input  wire	[`ROBBus]		Reorder,
 	input  wire	[`DataBus]		A,
 	input  wire	[`AddrBus]		pc
 );

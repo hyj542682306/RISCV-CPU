@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module LSB (
 	input  wire					clk,
@@ -13,17 +13,14 @@ module LSB (
 	output	reg 				Mem_S,
 	output	reg					Mem_op,
 	output	reg	[`AddrBus]		Mem_pc,
-	output	reg	[`InstLen]		Mem_len, 
+	output	reg	[`InstLen]		Mem_len,
+	output	reg [`DataBus]		Mem_result,
 
 	//LSB
 	output	reg					LSB_nxt_full,
-	output	reg	[`LSBBus]		LSB_nxt_pos, //send it to the Dispatch
 	output	reg					CDB_LSB_S,
 	output	reg	[`ROBBus]		CDB_LSB_Reorder,
 	output	reg	[`DataBus]		CDB_LSB_Value,
-
-	//ID
-	input  wire					ID_S,
 
 	//Dispatch
 	input  wire					Dispatch_S,
@@ -44,24 +41,21 @@ module LSB (
 	input  wire	[`DataBus]		ROB_Update1_Value,
 	input  wire					ROB_Update2_S,
 	input  wire	[`ROBBus]		ROB_Update2_Reorder,
-	input  wire	[`DataBus]		ROB_Update2_Value,
-	output	reg 				ROB_load_S,
-	output	reg	[`ROBBus]		ROB_load_Reorder,
-	output	reg	[`DataBus]		ROB_load_Value
+	input  wire	[`DataBus]		ROB_Update2_Value
 );
 
-reg	[`OpBus]					Opcode[`LSBBus];
-reg								Tj[`LSBBus];
-reg								Tk[`LSBBus];
-reg	[`ROBBus]					Qj[`LSBBus];
-reg	[`ROBBus]					Qk[`LSBBus];
-reg	[`DataBus]					Vj[`LSBBus];
-reg	[`DataBus]					Vk[`LSBBus];
-reg	[`DataBus]					A[`LSBBus];
-reg 							Busy[`LSBBus];
-reg	[`ROBBus]					Reorder[`LSBBus];
-reg	[`AddrBus]					pc[`LSBBus];
-reg 							Commit[`LSBBus];
+reg	[`OpBus]					Opcode[`LSBSize];
+reg								Tj[`LSBSize];
+reg								Tk[`LSBSize];
+reg	[`ROBBus]					Qj[`LSBSize];
+reg	[`ROBBus]					Qk[`LSBSize];
+reg	[`DataBus]					Vj[`LSBSize];
+reg	[`DataBus]					Vk[`LSBSize];
+reg	[`DataBus]					A[`LSBSize];
+reg 							Busy[`LSBSize];
+reg	[`ROBBus]					Reorder[`LSBSize];
+reg	[`AddrBus]					pc[`LSBSize];
+reg 							Commit[`LSBSize];
 reg	[`LSBBus]					head;
 reg	[`LSBBus]					tail;
 
@@ -79,21 +73,10 @@ always @(*) begin
 	end
 end
 
-//find the nxtpos and send it to Dispatch
-always @(*) begin
-	if (rst||clr||ID_S==`Disable) begin
-		LSB_nxt_pos=`Null;
-	end
-	else begin
-		LSB_nxt_pos=tail;
-	end
-end
-
 always @(posedge clk) begin
 	if (rst) begin
 		Mem_S<=`Disable;
 		CDB_LSB_S<=`Disable;
-		ROB_load_S<=`Disable;
 		for (i=0;i<`SIZE;i=i+1) begin
 			Busy[i]<=`False;
 		end
@@ -103,16 +86,18 @@ always @(posedge clk) begin
 		CommitNum<=0;
 	end
 	else if (clr) begin
+		// $display("LSB clr! CommitNum: %d",CommitNum);
 		Mem_S<=`Disable;
 		CDB_LSB_S<=`Disable;
-		ROB_load_S<=`Disable;
 		for (i=CommitNum;i<`SIZE;i=i+1) begin
 			Busy[head+i]<=`False;
+			Commit[head+i]<=`False;
 		end
 		tail<=head+CommitNum;
 		BusyNum<=CommitNum;
 	end
 	else if (rdy) begin
+		// $display("LSB BusyNum: %d",BusyNum);
 		//update the information from ROB
 		if (ROB_Update1_S) begin
 			for (i=0;i<`SIZE;i=i+1) begin
@@ -155,6 +140,7 @@ always @(posedge clk) begin
 
 		//add a new inst
 		if (Dispatch_S) begin
+			// $display("LSB NEW INST: %b",Dispatch_Op);
 			Busy[tail]<=`True;
 			Opcode[tail]<=Dispatch_Op;
 
@@ -204,8 +190,10 @@ always @(posedge clk) begin
 			BusyNum<=BusyNum+1'b1;
 		end
 
-		//check the head of the queuem,,,,,
-		if (Busy[head]) begin
+		// $display("LSB HEAD: %d; TAIL: %d; Op[TAIL-1]: %b; CommitNum: %d",head,tail,Opcode[tail-1],CommitNum);
+		//check the head of the queue
+		if (BusyNum>0&&Busy[head]) begin
+			// $display("LSB HEAD: Head: %d; Tail: %d; Opcode: %b; Tj: %d; Commit: %d",head,tail,Opcode[head],Tj[head],Commit[head]);
 			case (Opcode[head])
 
 				`LB,`LH,`LW,`LBU,`LHU: begin
@@ -216,6 +204,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 
 									CDB_LSB_S<=`Enable;
+									CDB_LSB_Reorder<=Reorder[head];
 									CDB_LSB_Value<={{25{Mem_value[7]}},Mem_value[6:0]};
 
 									Busy[head]<=`False;
@@ -236,6 +225,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 
 									CDB_LSB_S<=`Enable;
+									CDB_LSB_Reorder<=Reorder[head];
 									CDB_LSB_Value<={{17{Mem_value[15]}},Mem_value[14:0]};
 
 									Busy[head]<=`False;
@@ -256,6 +246,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 
 									CDB_LSB_S<=`Enable;
+									CDB_LSB_Reorder<=Reorder[head];
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
@@ -276,6 +267,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 
 									CDB_LSB_S<=`Enable;
+									CDB_LSB_Reorder<=Reorder[head];
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
@@ -296,6 +288,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 
 									CDB_LSB_S<=`Enable;
+									CDB_LSB_Reorder<=Reorder[head];
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
@@ -337,6 +330,7 @@ always @(posedge clk) begin
 									Mem_op<=1'b1;
 									Mem_pc<=Vj[head]+A[head];
 									Mem_len<=1'b1;
+									Mem_result<=Vk[head];
 								end
 							end
 							`SW: begin
@@ -353,6 +347,7 @@ always @(posedge clk) begin
 									Mem_op<=1'b1;
 									Mem_pc<=Vj[head]+A[head];
 									Mem_len<=2'b10;
+									Mem_result<=Vk[head];
 								end
 							end
 							`SH: begin
@@ -369,6 +364,7 @@ always @(posedge clk) begin
 									Mem_op<=1'b1;
 									Mem_pc<=Vj[head]+A[head];
 									Mem_len<=3'b100;
+									Mem_result<=Vk[head];
 								end
 							end
 						endcase
@@ -380,10 +376,14 @@ always @(posedge clk) begin
 
 			endcase
 		end
+		else begin
+			Mem_S<=`Disable;
+			CDB_LSB_S<=`Disable;
+		end
 	end
 	else begin
 		Mem_S<=`Disable;
-		ROB_load_S<=`Disable;
+		CDB_LSB_S<=`Disable;
 	end
 end
 

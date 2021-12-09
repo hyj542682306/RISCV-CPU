@@ -1,4 +1,4 @@
-`include "Definition.v"
+`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
 
 module ROB (
 	input  wire 				clk,
@@ -58,13 +58,13 @@ module ROB (
 	output	reg	[`DataBus]		LSB_Update2_Value
 );
 
-reg	[`OpBus]					Opcode[`ROBBus];
-reg	[`RegBus]					Dest[`ROBBus];
-reg	[`DataBus]					Value[`ROBBus];
-reg								Jump_S[`ROBBus];
-reg	[`AddrBus]					Jump[`ROBBus];
-reg	[`AddrBus]					pc[`ROBBus];
-reg								Ready[`ROBBus];
+reg	[`OpBus]					Opcode[`ROBSize];
+reg	[`RegBus]					Dest[`ROBSize];
+reg	[`DataBus]					Value[`ROBSize];
+reg								Jump_S[`ROBSize];
+reg	[`AddrBus]					Jump[`ROBSize];
+reg	[`AddrBus]					pc[`ROBSize];
+reg								Ready[`ROBSize];
 reg	[`ROBBus]					head;
 reg	[`ROBBus]					tail;
 reg								empty;
@@ -73,7 +73,7 @@ integer 						i;
 
 //find the nxtpos and send it to Dispatch
 always @(*) begin
-	if (rst||clr||ID_S==`Disable) begin
+	if (ID_S==`Disable) begin
 		ROB_nxt_pos=`Null;
 	end
 	else begin
@@ -83,7 +83,7 @@ end
 
 //send the information to Dispatch rs1
 always @(*) begin
-	if (rst||clr||Dispatch_rs1_S==`Disable) begin
+	if (Dispatch_rs1_S==`Disable) begin
 		Dispatch_rs1_already=`False;
 	end
 	else begin
@@ -99,7 +99,7 @@ end
 
 //send the information to Dispatch rs2
 always @(*) begin
-	if (rst||clr||Dispatch_rs2_S==`Disable) begin
+	if (Dispatch_rs2_S==`Disable) begin
 		Dispatch_rs2_already=`False;
 	end
 	else begin
@@ -191,6 +191,7 @@ always @(posedge clk) begin
 			LSB_Update1_S<=`Disable;
 		end
 		if (LSB_load_S) begin
+			// $display("LSB_LOAD_S Reorder: %d",LSB_load_Reorder);
 			Value[LSB_load_Reorder]<=LSB_load_Value;
 			Ready[LSB_load_Reorder]<=`True;
 			LSB_Update2_S<=`Enable;
@@ -201,8 +202,12 @@ always @(posedge clk) begin
 			LSB_Update2_S<=`Disable;
 		end
 
+		// $display("ROB HEAD: Head: %d; Tail: %d; Opcode: %b; Ready: %d",head,tail,Opcode[head],Ready[head]);
+
 		//commit
 		if ((!empty)&&Ready[head]) begin
+			// $display("Commit Opcode: %b; rd: %h; Value: %d; Jump: %d",Opcode[head],Dest[head],Value[head],Jump[head]);
+			// $display("Value: %d; Jump: %d; Commit Opcode: %b; rd: %h; pc: %d",Value[head],Jump[head],Opcode[head],Dest[head],pc[head]);
 			case (Opcode[head])
 
 				`JAL,`JALR: begin
@@ -258,7 +263,13 @@ always @(posedge clk) begin
 				end
 
 			endcase
-			head<=head+1;
+			head<=head+1'b1;
+		end
+		else begin
+			clr<=`False;
+			IF_Jump_S<=`Disable;
+			Reg_write_S<=`Disable;
+			LSB_store_S<=`Disable;
 		end
 	end
 	else begin

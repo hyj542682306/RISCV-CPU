@@ -43,10 +43,20 @@
 `define InstBus 31:0
 `define InstLen 2:0
 `define RegBus 4:0
+`define RegSize 31:0
 `define RSBus 4:0
+`define RSSize 31:0
 `define ROBBus 4:0
+`define ROBSize 31:0
 `define IQBus 4:0
+`define IQSize 31:0
 `define LSBBus 4:0
+`define LSBSize 31:0
+`define ICacheBus 7:0
+`define ICacheSize 255:0
+`define CacheIndex 7:0
+`define TagBus 23:0
+`define CacheTag 31:8
 
 `define Null 0
 `define True 1'b1
@@ -55,3 +65,4 @@
 `define Disable 1'b0
 
 `define SIZE 6'b100000
+`define CacheSize 9'b10000000
