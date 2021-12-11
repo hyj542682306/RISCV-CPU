@@ -1,6 +1,4 @@
 // implements 128KB of on-board RAM
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/common/block_ram/block_ram.v"
-
 module ram
 #(
   parameter ADDR_WIDTH = 17

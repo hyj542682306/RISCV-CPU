@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module IQ (
 	input  wire					clk,
 	input  wire					rst,  
@@ -14,10 +12,6 @@ module IQ (
 	input  wire					IF_S,
 	input  wire	[`InstBus]		IF_Inst,
 	input  wire	[`AddrBus]		IF_pc,
-
-	output reg [`InstBus]		dfdf,
-	output reg [`InstBus]		pkpk,
-	output reg [`InstBus]		plpl,
 
 	//ID
 	input  wire					ID_Success,
@@ -35,7 +29,7 @@ integer							qSize;
 
 //whether the IQ is empty or full
 always @(*) begin
-	IQ_full<=(qSize==`SIZE);
+	IQ_full=(qSize==`SIZE);
 end
 
 always @(posedge clk) begin

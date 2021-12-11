@@ -1,9 +1,9 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module ICache (
 	input  wire					clk,
 	input  wire					rst,
 	input  wire					rdy,
+
+	input  wire					clr,
 
 	//IF
 	input  wire					IF_S,
@@ -32,6 +32,10 @@ always @(posedge clk) begin
 			valid[i]<=`False;
 		end
 		stall<=0;
+	end
+	else if (clr) begin
+		Mem_S<=`Disable;
+		IF_success<=`False;
 	end
 	else if (rdy) begin
 		if (IF_S) begin

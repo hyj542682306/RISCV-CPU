@@ -1,19 +1,5 @@
 // RISCV32I CPU top module
 // port modification allowed for debugging purposes
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/hci.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/ram.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Mem_ctrl.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/ALU.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Dispatch.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/ICache.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/ID.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/IF.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/IQ.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/LSB.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Regfile.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/ROB.v"
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/RS.v"
 
 module cpu(
   input  wire                 clk_in,			// system clock signal
@@ -179,6 +165,8 @@ wire [`DataBus]	  	ROB_LSB_Update1_Value;
 wire				      	ROB_LSB_Update2_S;
 wire [`ROBBus]	  	ROB_LSB_Update2_Reorder;
 wire [`DataBus]	  	ROB_LSB_Update2_Value;
+wire                ROB_LSB_head_S;
+wire [`ROBBus]      ROB_LSB_head;
 
 //ROB -> Regfile
 wire					      ROB_Reg_write_S;
@@ -294,6 +282,8 @@ ICache  ICache(
   .rst(rst_in),
   .rdy(rdy_in),
 
+  .clr(clr),
+
   //IF
   .IF_S(IF_IC_S),
   .IF_pc(IF_IC_pc),
@@ -351,7 +341,7 @@ IF  IF(
   .IC_pc(IF_IC_pc),
 
   //IQ
-  .IQ_full(IQ_ID_full),
+  .IQ_full(IQ_IF_full),
   .IQ_S(IF_IQ_S),
   .IQ_Inst(IF_IQ_Inst),
   .IQ_pc(IF_IQ_pc),
@@ -424,7 +414,9 @@ LSB  LSB(
   .ROB_Update1_Value(ROB_LSB_Update1_Value),
   .ROB_Update2_S(ROB_LSB_Update2_S),
   .ROB_Update2_Reorder(ROB_LSB_Update2_Reorder),
-  .ROB_Update2_Value(ROB_LSB_Update2_Value)
+  .ROB_Update2_Value(ROB_LSB_Update2_Value),
+  .ROB_head_S(ROB_LSB_head_S),
+  .ROB_head(ROB_LSB_head)
 );
 
 Regfile  Regfile(
@@ -513,7 +505,9 @@ ROB  ROB(
   .LSB_Update1_Value(ROB_LSB_Update1_Value),
   .LSB_Update2_S(ROB_LSB_Update2_S),
   .LSB_Update2_Reorder(ROB_LSB_Update2_Reorder),
-  .LSB_Update2_Value(ROB_LSB_Update2_Value)
+  .LSB_Update2_Value(ROB_LSB_Update2_Value),
+  .LSB_head_S(ROB_LSB_head_S),
+  .LSB_head(ROB_LSB_head)
 );
 
 RS  RS(

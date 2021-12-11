@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module ROB (
 	input  wire 				clk,
 	input  wire 				rst,
@@ -55,7 +53,10 @@ module ROB (
 	output	reg	[`DataBus]		LSB_Update1_Value,
 	output	reg 				LSB_Update2_S,
 	output	reg	[`ROBBus]		LSB_Update2_Reorder,
-	output	reg	[`DataBus]		LSB_Update2_Value
+	output	reg	[`DataBus]		LSB_Update2_Value,
+
+	output	reg					LSB_head_S,
+	output	reg	[`ROBBus]		LSB_head
 );
 
 reg	[`OpBus]					Opcode[`ROBSize];
@@ -85,6 +86,7 @@ end
 always @(*) begin
 	if (Dispatch_rs1_S==`Disable) begin
 		Dispatch_rs1_already=`False;
+		Dispatch_rs1_value=`Null;
 	end
 	else begin
 		if (Ready[Dispatch_rs1_Reorder]) begin
@@ -93,6 +95,7 @@ always @(*) begin
 		end
 		else begin
 			Dispatch_rs1_already=`False;
+			Dispatch_rs1_value=`Null;
 		end
 	end
 end
@@ -101,6 +104,7 @@ end
 always @(*) begin
 	if (Dispatch_rs2_S==`Disable) begin
 		Dispatch_rs2_already=`False;
+		Dispatch_rs2_value=`Null;
 	end
 	else begin
 		if (Ready[Dispatch_rs2_Reorder]) begin
@@ -109,7 +113,20 @@ always @(*) begin
 		end
 		else begin
 			Dispatch_rs2_already=`False;
+			Dispatch_rs2_value=`Null;
 		end
+	end
+end
+
+//send the information of the head of the queue to LSB
+always @(*) begin
+	if (!empty) begin
+		LSB_head_S=`Enable;
+		LSB_head=head;
+	end
+	else begin
+		LSB_head_S=`Disable;
+		LSB_head=`Null;
 	end
 end
 
@@ -162,6 +179,7 @@ always @(posedge clk) begin
 
 		//add a new inst
 		if (Dispatch_S) begin
+			// $display("Add Inst Op: %b; pc: %d; head: %d; tail: %d",Dispatch_Op,Dispatch_pc,head,tail);
 			Opcode[tail]<=Dispatch_Op;
 			Dest[tail]<=Dispatch_rd;
 			Value[tail]<=`Null;
@@ -207,7 +225,7 @@ always @(posedge clk) begin
 		//commit
 		if ((!empty)&&Ready[head]) begin
 			// $display("Commit Opcode: %b; rd: %h; Value: %d; Jump: %d",Opcode[head],Dest[head],Value[head],Jump[head]);
-			// $display("Value: %d; Jump: %d; Commit Opcode: %b; rd: %h; pc: %d",Value[head],Jump[head],Opcode[head],Dest[head],pc[head]);
+			// $display("Value: %d; Jump: %d; Commit Opcode: %b; rd: %h; pc: %d; head: %d; tail: %d",Value[head],Jump[head],Opcode[head],Dest[head],pc[head],head,tail);
 			case (Opcode[head])
 
 				`JAL,`JALR: begin

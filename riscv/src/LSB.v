@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module LSB (
 	input  wire					clk,
 	input  wire 				rst,
@@ -41,7 +39,9 @@ module LSB (
 	input  wire	[`DataBus]		ROB_Update1_Value,
 	input  wire					ROB_Update2_S,
 	input  wire	[`ROBBus]		ROB_Update2_Reorder,
-	input  wire	[`DataBus]		ROB_Update2_Value
+	input  wire	[`DataBus]		ROB_Update2_Value,
+	input  wire					ROB_head_S,
+	input  wire [`ROBBus]		ROB_head
 );
 
 reg	[`OpBus]					Opcode[`LSBSize];
@@ -86,15 +86,30 @@ always @(posedge clk) begin
 		CommitNum<=0;
 	end
 	else if (clr) begin
-		// $display("LSB clr! CommitNum: %d",CommitNum);
 		Mem_S<=`Disable;
 		CDB_LSB_S<=`Disable;
-		for (i=CommitNum;i<`SIZE;i=i+1) begin
-			Busy[head+i]<=`False;
-			Commit[head+i]<=`False;
+		if (Mem_success&&Commit[head]==1) begin
+			for (i=1;i<`SIZE;i=i+1) begin
+				if (!Commit[head+i]) begin
+					Busy[head+i]<=`False;
+				end
+			end
+			Commit[head]<=`False;
+			CommitNum<=CommitNum-1'b1;
+			Busy[head]<=`False;
+			BusyNum<=CommitNum-1'b1;
+			head<=head+1'b1;
+			tail<=head+CommitNum;
 		end
-		tail<=head+CommitNum;
-		BusyNum<=CommitNum;
+		else begin
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (!Commit[head+i]) begin
+					Busy[head+i]<=`False;
+				end
+			end
+			tail<=head+CommitNum;
+			BusyNum<=CommitNum;
+		end
 	end
 	else if (rdy) begin
 		// $display("LSB BusyNum: %d",BusyNum);
@@ -123,16 +138,6 @@ always @(posedge clk) begin
 					if (Tk[i]==1'b1&&Qk[i]==ROB_Update2_Reorder) begin
 						Tk[i]<=1'b0;
 						Vk[i]<=ROB_Update2_Value;
-					end
-				end
-			end
-		end
-		if (ROB_store_S) begin
-			for (i=0;i<`SIZE;i=i+1) begin
-				if (Busy[i]) begin
-					if (ROB_store_Reorder==Reorder[i]) begin
-						Commit[i]<=`True;
-						CommitNum<=CommitNum+1'b1;
 					end
 				end
 			end
@@ -187,17 +192,19 @@ always @(posedge clk) begin
 			pc[tail]<=Dispatch_pc;
 			Commit[tail]<=`False;
 			tail<=tail+1'b1;
-			BusyNum<=BusyNum+1'b1;
 		end
 
-		// $display("LSB HEAD: %d; TAIL: %d; Op[TAIL-1]: %b; CommitNum: %d",head,tail,Opcode[tail-1],CommitNum);
+		// $display("LSB HEAD: %d; TAIL: %d; Op[TAIL-1]: %b; pc[TAIL-1]: %d; Tj: %d; Qj: %d; CommitNum: %d; BusyNum: %d",head,tail,Opcode[tail-1],pc[tail-1],Tj[tail-1],Qj[tail-1],CommitNum,BusyNum);
 		//check the head of the queue
 		if (BusyNum>0&&Busy[head]) begin
 			// $display("LSB HEAD: Head: %d; Tail: %d; Opcode: %b; Tj: %d; Commit: %d",head,tail,Opcode[head],Tj[head],Commit[head]);
 			case (Opcode[head])
 
 				`LB,`LH,`LW,`LBU,`LHU: begin
-					if (Tj[head]==1'b0) begin
+					if (Tj[head]==1'b0 &&
+						( (Vj[head]+A[head]<32'h30000)
+						|| (Vj[head]+A[head]>=32'h30000&&ROB_head_S&&Reorder[head]==ROB_head) )
+						) begin
 						case (Opcode[head])
 							`LB: begin
 								if (Mem_success) begin
@@ -208,7 +215,7 @@ always @(posedge clk) begin
 									CDB_LSB_Value<={{25{Mem_value[7]}},Mem_value[6:0]};
 
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									head<=head+1'b1;
 								end
 								else begin
@@ -218,6 +225,8 @@ always @(posedge clk) begin
 									Mem_len<=1'b1;
 									
 									CDB_LSB_S<=`Disable;
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 							`LH: begin
@@ -229,7 +238,7 @@ always @(posedge clk) begin
 									CDB_LSB_Value<={{17{Mem_value[15]}},Mem_value[14:0]};
 
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									head<=head+1'b1;
 								end
 								else begin
@@ -239,6 +248,8 @@ always @(posedge clk) begin
 									Mem_len<=2'b10;
 									
 									CDB_LSB_S<=`Disable;
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 							`LW: begin
@@ -250,7 +261,7 @@ always @(posedge clk) begin
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									head<=head+1'b1;
 								end
 								else begin
@@ -260,6 +271,8 @@ always @(posedge clk) begin
 									Mem_len<=3'b100;
 									
 									CDB_LSB_S<=`Disable;
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 							`LBU: begin
@@ -271,7 +284,7 @@ always @(posedge clk) begin
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									head<=head+1'b1;
 								end
 								else begin
@@ -281,6 +294,8 @@ always @(posedge clk) begin
 									Mem_len<=1'b1;
 									
 									CDB_LSB_S<=`Disable;
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 							`LHU: begin
@@ -292,7 +307,7 @@ always @(posedge clk) begin
 									CDB_LSB_Value<=Mem_value;
 
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									head<=head+1'b1;
 								end
 								else begin
@@ -302,6 +317,8 @@ always @(posedge clk) begin
 									Mem_len<=2'b10;
 
 									CDB_LSB_S<=`Disable;
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 						endcase
@@ -309,10 +326,11 @@ always @(posedge clk) begin
 					else begin
 						Mem_S<=`Disable;
 						CDB_LSB_S<=`Disable;
+						BusyNum<=BusyNum+Dispatch_S;
 					end
 				end
 
-				`SB,`SW,`SH: begin
+				`SB,`SH,`SW: begin
 					CDB_LSB_S<=`Disable;
 					if (Commit[head]) begin
 						case (Opcode[head])
@@ -320,57 +338,118 @@ always @(posedge clk) begin
 								if (Mem_success) begin
 									Mem_S<=`Disable;
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									Commit[head]<=`False;
-									CommitNum<=CommitNum-1'b1;
 									head<=head+1'b1;
 								end
 								else begin
 									Mem_S<=`Enable;
 									Mem_op<=1'b1;
-									Mem_pc<=Vj[head]+A[head];
+
+									if (ROB_Update1_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update1_Reorder) begin
+										Mem_pc<=ROB_Update1_Value+A[head];
+									end
+									else if (ROB_Update2_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update2_Reorder) begin
+										Mem_pc<=ROB_Update2_Value+A[head];
+									end
+									else begin
+										Mem_pc<=Vj[head]+A[head];
+									end
+
 									Mem_len<=1'b1;
-									Mem_result<=Vk[head];
-								end
-							end
-							`SW: begin
-								if (Mem_success) begin
-									Mem_S<=`Disable;
-									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
-									Commit[head]<=`False;
-									CommitNum<=CommitNum-1'b1;
-									head<=head+1'b1;
-								end
-								else begin
-									Mem_S<=`Enable;
-									Mem_op<=1'b1;
-									Mem_pc<=Vj[head]+A[head];
-									Mem_len<=2'b10;
-									Mem_result<=Vk[head];
+
+									if (ROB_Update1_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update1_Reorder) begin
+										Mem_result<=ROB_Update1_Value;
+									end
+									else if (ROB_Update2_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update2_Reorder) begin
+										Mem_result<=ROB_Update2_Value;
+									end
+									else begin
+										Mem_result<=Vk[head];
+									end
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 							`SH: begin
 								if (Mem_success) begin
 									Mem_S<=`Disable;
 									Busy[head]<=`False;
-									BusyNum<=BusyNum-1'b1;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
 									Commit[head]<=`False;
-									CommitNum<=CommitNum-1'b1;
 									head<=head+1'b1;
 								end
 								else begin
 									Mem_S<=`Enable;
 									Mem_op<=1'b1;
-									Mem_pc<=Vj[head]+A[head];
+
+									if (ROB_Update1_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update1_Reorder) begin
+										Mem_pc<=ROB_Update1_Value+A[head];
+									end
+									else if (ROB_Update2_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update2_Reorder) begin
+										Mem_pc<=ROB_Update2_Value+A[head];
+									end
+									else begin
+										Mem_pc<=Vj[head]+A[head];
+									end
+
+									Mem_len<=2'b10;
+
+									if (ROB_Update1_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update1_Reorder) begin
+										Mem_result<=ROB_Update1_Value;
+									end
+									else if (ROB_Update2_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update2_Reorder) begin
+										Mem_result<=ROB_Update2_Value;
+									end
+									else begin
+										Mem_result<=Vk[head];
+									end
+
+									BusyNum<=BusyNum+Dispatch_S;
+								end
+							end
+							`SW: begin
+								if (Mem_success) begin
+									Mem_S<=`Disable;
+									Busy[head]<=`False;
+									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									Commit[head]<=`False;
+									head<=head+1'b1;
+								end
+								else begin
+									Mem_S<=`Enable;
+									Mem_op<=1'b1;
+
+									if (ROB_Update1_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update1_Reorder) begin
+										Mem_pc<=ROB_Update1_Value+A[head];
+									end
+									else if (ROB_Update2_S&&Tj[head]==1'b1&&Qj[head]==ROB_Update2_Reorder) begin
+										Mem_pc<=ROB_Update2_Value+A[head];
+									end
+									else begin
+										Mem_pc<=Vj[head]+A[head];
+									end
+
 									Mem_len<=3'b100;
-									Mem_result<=Vk[head];
+									
+									if (ROB_Update1_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update1_Reorder) begin
+										Mem_result<=ROB_Update1_Value;
+									end
+									else if (ROB_Update2_S&&Tk[head]==1'b1&&Qk[head]==ROB_Update2_Reorder) begin
+										Mem_result<=ROB_Update2_Value;
+									end
+									else begin
+										Mem_result<=Vk[head];
+									end
+
+									BusyNum<=BusyNum+Dispatch_S;
 								end
 							end
 						endcase
 					end
 					else begin
 						Mem_S<=`Disable;
+						BusyNum<=BusyNum+Dispatch_S;
 					end
 				end
 
@@ -379,6 +458,27 @@ always @(posedge clk) begin
 		else begin
 			Mem_S<=`Disable;
 			CDB_LSB_S<=`Disable;
+			BusyNum<=BusyNum+Dispatch_S;
+		end
+
+		if (ROB_store_S) begin
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (Busy[i]) begin
+					if (ROB_store_Reorder==Reorder[i]) begin
+						Commit[i]<=`True;
+						CommitNum<=CommitNum+1'b1-
+							(BusyNum>0 && Busy[head] && 
+								(Opcode[head]==`SB||Opcode[head]==`SH||Opcode[head]==`SW) &&
+							Mem_success);
+					end
+				end
+			end
+		end
+		else begin
+			CommitNum<=CommitNum-
+				(BusyNum>0 && Busy[head] && 
+					(Opcode[head]==`SB||Opcode[head]==`SH|Opcode[head]==`SW) &&
+				Mem_success);
 		end
 	end
 	else begin

@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module IF (
 	input  wire					clk,
 	input  wire 				rst,
@@ -22,15 +20,19 @@ module IF (
 	input  wire	[`AddrBus]		ROB_Jump
 );
 
+integer							stall;
+
 reg	[`AddrBus]					pc;
 
 always @(posedge clk) begin
 	if (rst) begin
+		stall<=0;
 		pc<=0;
 		IC_S<=`Disable;
 		IQ_S<=`Disable;
 	end
 	else if (ROB_Jump_S) begin
+		stall<=0;
 		pc<=ROB_Jump;
 		IC_S<=`Disable;
 		IQ_S<=`Disable;
@@ -40,17 +42,25 @@ always @(posedge clk) begin
 		IQ_S<=`Disable;
 	end
 	else if (rdy) begin
-		if (IC_success) begin
-			IC_S<=`Disable;
-			IQ_S<=`Enable;
-			IQ_Inst<=IC_value;
-			// $display("IF: %h",IC_value);
-			IQ_pc<=pc;
-			pc<=pc+3'b100;
+		if (stall==0) begin
+			if (IC_success) begin
+				IC_S<=`Disable;
+				IQ_S<=`Enable;
+				IQ_Inst<=IC_value;
+				// $display("IF: %h",IC_value);
+				IQ_pc<=pc;
+				pc<=pc+3'b100;
+				stall<=1;
+			end
+			else begin
+				IC_S<=`Enable;
+				IC_pc<=pc;
+				IQ_S<=`Disable;
+			end
 		end
 		else begin
-			IC_S<=`Enable;
-			IC_pc<=pc;
+			stall<=stall-1'b1;
+			IC_S<=`Disable;
 			IQ_S<=`Disable;
 		end
 	end

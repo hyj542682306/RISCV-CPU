@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module Regfile (
 	input  wire					clk,
 	input  wire 				rst,
@@ -39,6 +37,9 @@ integer							i;
 
 //send the information of 'rs1' to Dispatch
 always @(*) begin
+	Dispatch_rs1_S=`Disable;
+	Dispatch_rs1_type=`Null;
+	Dispatch_rs1_value=`Null;
 	if (ID_rs1_S==`Disable) begin
 		Dispatch_rs1_S=`Disable;
 	end
@@ -63,6 +64,9 @@ end
 
 //send the information of 'rs2' to Dispatch
 always @(*) begin
+	Dispatch_rs2_S=`Disable;
+	Dispatch_rs2_type=`Null;
+	Dispatch_rs2_value=`Null;
 	if (ID_rs2_S==`Disable) begin
 		Dispatch_rs2_S=`Disable;
 	end
@@ -88,13 +92,13 @@ end
 //update the information of Regfile after ROB's commit
 always @(posedge clk) begin
 	if (rst) begin
-		for (i=0;i<`SIZE;i=i+1) begin
+		for (i=0;i<`RegSIZE;i=i+1) begin
 			V[i]<=0;
 			T[i]<=1'b0;
 		end
 	end
 	else if (clr) begin
-		for (i=0;i<`SIZE;i=i+1) begin
+		for (i=0;i<`RegSIZE;i=i+1) begin
 			T[i]<=1'b0;
 		end
 		if (ROB_write_S==`Enable&&ROB_rd!=0) begin

@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module RS (
 	input  wire					clk,
 	input  wire					rst,
@@ -75,6 +73,7 @@ end
 
 //find the nxtpos and send it to Dispatch
 always @(*) begin
+	RS_nxt_pos=`Null;
 	if (rst||clr||ID_S==`Disable) begin
 		RS_nxt_pos=`Null;
 	end
@@ -89,6 +88,7 @@ end
 
 //find the readypos and send it tp Dispatch
 always @(*) begin
+	RS_nxt_ready_pos=`False;
 	if (rst||clr) begin
 		RS_nxt_ready=`False;
 	end
@@ -218,7 +218,6 @@ always @(posedge clk) begin
 			A[Dispatch_pos]<=Dispatch_A;
 			Reorder[Dispatch_pos]<=Dispatch_Reorder;
 			pc[Dispatch_pos]<=Dispatch_pc;
-			BusyNum<=BusyNum+1'b1;
 		end
 
 		//find the ready inst and send it to ALU
@@ -231,11 +230,12 @@ always @(posedge clk) begin
 			ALU_A<=A[Dispatch_ready_pos];
 			ALU_pc<=pc[Dispatch_ready_pos];
 			Busy[Dispatch_ready_pos]<=`False;
-			BusyNum<=BusyNum-1'b1;
 		end
 		else begin
 			ALU_S<=`Disable;
 		end
+
+		BusyNum<=BusyNum+Dispatch_S-Dispatch_ready;
 	end
 	else begin
 		ALU_S<=`Disable;

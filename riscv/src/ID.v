@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module ID (
 	//IQ
 	input  wire					IQ_S,
@@ -34,10 +32,18 @@ module ID (
 
 always @(*) begin
 
+	IQ_Success=`False;
+
 	Reg_rs1_S=`Disable;
+	Reg_rs1=`Null;
 	Reg_rs2_S=`Disable;
+	Reg_rs2=`Null;
 
 	Dispatch_S=`Disable;
+	Dispatch_A=`Null;
+	Dispatch_rd=`Null;
+	Dispatch_Op=`Null;
+	Dispatch_pc=`Null;
 
 	ROB_S=`Disable;
 	RS_S=`Disable;

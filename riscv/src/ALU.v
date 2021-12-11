@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module ALU (
 	//ALU
 	output	reg  				CDB_ALU_S,

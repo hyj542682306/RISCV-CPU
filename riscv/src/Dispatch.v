@@ -1,5 +1,3 @@
-`include "/mnt/d/2021-2022-1/system/work/CPU/riscv/src/Definition.v"
-
 module Dispatch (
 	//ID
 	input  wire					Dispatch_S,
@@ -55,6 +53,27 @@ module Dispatch (
 );
 
 always @(*) begin
+	Dispatch_Op=`Null;
+	Dispatch_A=`Null;
+	Dispatch_rd=`Null;
+	Dispatch_Reorder=`Null;
+	Dispatch_pc=`Null;
+	Dispatch_Type_j=`Null;
+	Dispatch_Value_j=`Null;
+	Dispatch_Type_k=`Null;
+	Dispatch_Value_k=`Null;
+	Reg_writeQ_S=`Disable;
+	RS_S=`Disable;
+	RS_pos=`Null;
+	RS_ready=`Null;
+	RS_ready_pos=`Null;
+	LSB_S=`Disable;
+	ROB_S=`Disable;
+	ROB_rs1_S=`Disable;
+	ROB_rs1_Reorder=`Null;
+	ROB_rs2_S=`Disable;
+	ROB_rs2_Reorder=`Null;
+	
 	if (Dispatch_S) begin
 		// $display("Dispatch INST: %b; PC: %h",Op,pc);
 		//Dispatch

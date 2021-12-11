@@ -44,14 +44,14 @@
 `define InstLen 2:0
 `define RegBus 4:0
 `define RegSize 31:0
-`define RSBus 4:0
-`define RSSize 31:0
-`define ROBBus 4:0
-`define ROBSize 31:0
-`define IQBus 4:0
-`define IQSize 31:0
-`define LSBBus 4:0
-`define LSBSize 31:0
+`define RSBus 3:0
+`define RSSize 15:0
+`define ROBBus 3:0
+`define ROBSize 15:0
+`define IQBus 3:0
+`define IQSize 15:0
+`define LSBBus 3:0
+`define LSBSize 15:0
 `define ICacheBus 7:0
 `define ICacheSize 255:0
 `define CacheIndex 7:0
@@ -64,5 +64,6 @@
 `define Enable 1'b1
 `define Disable 1'b0
 
-`define SIZE 6'b100000
+`define SIZE 5'b10000
+`define RegSIZE 6'b100000
 `define CacheSize 9'b10000000
