@@ -113,7 +113,9 @@ always @(*) begin
 
 			`SLT: CDB_ALU_Value=$signed(Vj)<$signed(Vk);
 
-			`SLTU: CDB_ALU_Value=Vj^Vk;
+			`SLTU: CDB_ALU_Value=Vj<Vk;
+
+			`XOR: CDB_ALU_Value=Vj^Vk;
 
 			`SRL: CDB_ALU_Value=Vj>>Vk[5:0];
 

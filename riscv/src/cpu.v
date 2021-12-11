@@ -95,7 +95,7 @@ wire [`RSBus]		    RS_Dispatch_las_ready_pos;
 wire					      Dispatch_RS_S;
 wire [`RSBus]		    Dispatch_RS_pos;
 wire					      Dispatch_RS_ready;
-wire [`DataBus]     Dispatch_RS_ready_pos;
+wire [`RSBus]       Dispatch_RS_ready_pos;
 
 //Dispatch -> LSB
 wire                Dispatch_LSB_S;
@@ -145,7 +145,7 @@ wire                LSB_ID_full;
 wire                IQ_IF_full;
 wire                IF_IQ_S;
 wire [`InstBus]     IF_IQ_Inst;
-wire [`InstBus]     IF_IQ_pc;
+wire [`AddrBus]     IF_IQ_pc;
 
 //ROB -> IF
 wire                ROB_IF_Jump_S;

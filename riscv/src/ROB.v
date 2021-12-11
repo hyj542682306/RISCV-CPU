@@ -179,7 +179,6 @@ always @(posedge clk) begin
 
 		//add a new inst
 		if (Dispatch_S) begin
-			// $display("Add Inst Op: %b; pc: %d; head: %d; tail: %d",Dispatch_Op,Dispatch_pc,head,tail);
 			Opcode[tail]<=Dispatch_Op;
 			Dest[tail]<=Dispatch_rd;
 			Value[tail]<=`Null;
@@ -209,7 +208,6 @@ always @(posedge clk) begin
 			LSB_Update1_S<=`Disable;
 		end
 		if (LSB_load_S) begin
-			// $display("LSB_LOAD_S Reorder: %d",LSB_load_Reorder);
 			Value[LSB_load_Reorder]<=LSB_load_Value;
 			Ready[LSB_load_Reorder]<=`True;
 			LSB_Update2_S<=`Enable;

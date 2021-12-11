@@ -33,7 +33,7 @@ module Dispatch (
 	output	reg					RS_S,
 	output	reg	[`RSBus]		RS_pos,
 	output	reg					RS_ready,
-	output	reg	[`DataBus]		RS_ready_pos,
+	output	reg	[`RSBus]		RS_ready_pos,
 
 	//LSB - S,Op,A,Reorder,pc
 	output	reg					LSB_S,

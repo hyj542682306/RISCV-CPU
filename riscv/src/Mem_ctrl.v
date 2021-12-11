@@ -104,8 +104,26 @@ always @(posedge clk) begin
 	end
 	else if (rdy) begin
 		if (work) begin
+			//I/O read (LSB) only LB -> 2 clk
+			if (type==0&&startpos[17:16]==2'b11) begin
+				if (done==1'b1) begin
+					LSB_success<=`True;
+					IC_success<=`False;
+					LSB_value<={24'b0,mem_din};
+					work<=`False;
+					mem_wr<=0;
+					mem_a<=`Null;
+				end
+				else begin
+					done<=done+1'b1;
+					IC_success<=`False;
+					LSB_success<=`False;
+					mem_wr<=0;
+					mem_a<=`Null;
+				end
+			end
 			//read (IC/LSB) -> 0 stall
-			if (type==0) begin
+			else if (type==0) begin
 				if (done==len+1'b1) begin
 					if (boss==0) begin
 						LSB_success<=`True;
@@ -191,8 +209,8 @@ always @(posedge clk) begin
 		end
 		else begin
 			if (LSB_S) begin
-				//now I/O write -> 3 stalls
-				if (LSB_pos[17:16]==2'b11&&LSB_type==1) begin
+				//now I/O -> 3 stalls
+				if (LSB_pos[17:16]==2'b11) begin
 					if (stall>=2'b11&&(!io_buffer_full)) begin
 						stall<=0;
 						work<=`True;

@@ -26,7 +26,7 @@ module RS (
 	input  wire 				Dispatch_Type_k,
 	input  wire	[`DataBus]		Dispatch_Value_k,
 	input  wire					Dispatch_ready,
-	input  wire	[`DataBus]		Dispatch_ready_pos,
+	input  wire	[`RSBus]		Dispatch_ready_pos,
 
 	//ALU
 	output	reg					ALU_S,

@@ -89,9 +89,9 @@ always @(posedge clk) begin
 		Mem_S<=`Disable;
 		CDB_LSB_S<=`Disable;
 		if (Mem_success&&Commit[head]==1) begin
-			for (i=1;i<`SIZE;i=i+1) begin
-				if (!Commit[head+i]) begin
-					Busy[head+i]<=`False;
+			for (i=0;i<`SIZE;i=i+1) begin
+				if (head==i||!Commit[i]) begin
+					Busy[i]<=`False;
 				end
 			end
 			Commit[head]<=`False;
@@ -103,8 +103,8 @@ always @(posedge clk) begin
 		end
 		else begin
 			for (i=0;i<`SIZE;i=i+1) begin
-				if (!Commit[head+i]) begin
-					Busy[head+i]<=`False;
+				if (!Commit[i]) begin
+					Busy[i]<=`False;
 				end
 			end
 			tail<=head+CommitNum;
@@ -112,7 +112,6 @@ always @(posedge clk) begin
 		end
 	end
 	else if (rdy) begin
-		// $display("LSB BusyNum: %d",BusyNum);
 		//update the information from ROB
 		if (ROB_Update1_S) begin
 			for (i=0;i<`SIZE;i=i+1) begin
@@ -194,7 +193,6 @@ always @(posedge clk) begin
 			tail<=tail+1'b1;
 		end
 
-		// $display("LSB HEAD: %d; TAIL: %d; Op[TAIL-1]: %b; pc[TAIL-1]: %d; Tj: %d; Qj: %d; CommitNum: %d; BusyNum: %d",head,tail,Opcode[tail-1],pc[tail-1],Tj[tail-1],Qj[tail-1],CommitNum,BusyNum);
 		//check the head of the queue
 		if (BusyNum>0&&Busy[head]) begin
 			// $display("LSB HEAD: Head: %d; Tail: %d; Opcode: %b; Tj: %d; Commit: %d",head,tail,Opcode[head],Tj[head],Commit[head]);
