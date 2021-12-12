@@ -63,16 +63,6 @@ integer							i;
 integer							BusyNum;
 integer							CommitNum;
 
-//whether LSB is full
-always @(*) begin
-	if (BusyNum==`SIZE) begin
-		LSB_nxt_full=`True;
-	end
-	else begin
-		LSB_nxt_full=`False;
-	end
-end
-
 always @(posedge clk) begin
 	if (rst) begin
 		Mem_S<=`Disable;
@@ -83,6 +73,7 @@ always @(posedge clk) begin
 		head<=0;
 		tail<=0;
 		BusyNum<=0;
+		LSB_nxt_full<=`False;
 		CommitNum<=0;
 	end
 	else if (clr) begin
@@ -98,6 +89,7 @@ always @(posedge clk) begin
 			CommitNum<=CommitNum-1'b1;
 			Busy[head]<=`False;
 			BusyNum<=CommitNum-1'b1;
+			LSB_nxt_full<=`False;
 			head<=head+1'b1;
 			tail<=head+CommitNum;
 		end
@@ -109,6 +101,7 @@ always @(posedge clk) begin
 			end
 			tail<=head+CommitNum;
 			BusyNum<=CommitNum;
+			LSB_nxt_full<=(CommitNum==`SIZE);
 		end
 	end
 	else if (rdy) begin
@@ -214,6 +207,7 @@ always @(posedge clk) begin
 
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									head<=head+1'b1;
 								end
 								else begin
@@ -225,6 +219,7 @@ always @(posedge clk) begin
 									CDB_LSB_S<=`Disable;
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`LH: begin
@@ -237,6 +232,7 @@ always @(posedge clk) begin
 
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									head<=head+1'b1;
 								end
 								else begin
@@ -248,6 +244,7 @@ always @(posedge clk) begin
 									CDB_LSB_S<=`Disable;
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`LW: begin
@@ -260,6 +257,7 @@ always @(posedge clk) begin
 
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									head<=head+1'b1;
 								end
 								else begin
@@ -271,6 +269,7 @@ always @(posedge clk) begin
 									CDB_LSB_S<=`Disable;
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`LBU: begin
@@ -283,6 +282,7 @@ always @(posedge clk) begin
 
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									head<=head+1'b1;
 								end
 								else begin
@@ -294,6 +294,7 @@ always @(posedge clk) begin
 									CDB_LSB_S<=`Disable;
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`LHU: begin
@@ -306,6 +307,7 @@ always @(posedge clk) begin
 
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									head<=head+1'b1;
 								end
 								else begin
@@ -317,6 +319,7 @@ always @(posedge clk) begin
 									CDB_LSB_S<=`Disable;
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 						endcase
@@ -325,6 +328,7 @@ always @(posedge clk) begin
 						Mem_S<=`Disable;
 						CDB_LSB_S<=`Disable;
 						BusyNum<=BusyNum+Dispatch_S;
+						LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 					end
 				end
 
@@ -337,6 +341,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									Commit[head]<=`False;
 									head<=head+1'b1;
 								end
@@ -367,6 +372,7 @@ always @(posedge clk) begin
 									end
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`SH: begin
@@ -374,6 +380,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									Commit[head]<=`False;
 									head<=head+1'b1;
 								end
@@ -404,6 +411,7 @@ always @(posedge clk) begin
 									end
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 							`SW: begin
@@ -411,6 +419,7 @@ always @(posedge clk) begin
 									Mem_S<=`Disable;
 									Busy[head]<=`False;
 									BusyNum<=BusyNum-1'b1+Dispatch_S;
+									LSB_nxt_full<=(BusyNum-1'b1+Dispatch_S==`SIZE);
 									Commit[head]<=`False;
 									head<=head+1'b1;
 								end
@@ -441,6 +450,7 @@ always @(posedge clk) begin
 									end
 
 									BusyNum<=BusyNum+Dispatch_S;
+									LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 								end
 							end
 						endcase
@@ -448,6 +458,7 @@ always @(posedge clk) begin
 					else begin
 						Mem_S<=`Disable;
 						BusyNum<=BusyNum+Dispatch_S;
+						LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 					end
 				end
 
@@ -457,6 +468,7 @@ always @(posedge clk) begin
 			Mem_S<=`Disable;
 			CDB_LSB_S<=`Disable;
 			BusyNum<=BusyNum+Dispatch_S;
+			LSB_nxt_full<=(BusyNum+Dispatch_S==`SIZE);
 		end
 
 		if (ROB_store_S) begin
@@ -478,10 +490,6 @@ always @(posedge clk) begin
 					(Opcode[head]==`SB||Opcode[head]==`SH|Opcode[head]==`SW) &&
 				Mem_success);
 		end
-	end
-	else begin
-		Mem_S<=`Disable;
-		CDB_LSB_S<=`Disable;
 	end
 end
 

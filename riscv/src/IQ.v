@@ -61,9 +61,6 @@ always @(posedge clk) begin
 
 		qSize<=qSize+IF_S-ID_Success;
 	end
-	else begin
-		ID_S<=`Disable;
-	end
 end
 
 endmodule //IQ

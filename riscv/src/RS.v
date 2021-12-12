@@ -237,9 +237,6 @@ always @(posedge clk) begin
 
 		BusyNum<=BusyNum+Dispatch_S-Dispatch_ready;
 	end
-	else begin
-		ALU_S<=`Disable;
-	end
 end
 
 endmodule //RS

@@ -32,7 +32,7 @@ module Mem_ctrl (
 integer							stall;
 
 reg								work;
-reg								boss; //0: LSB, 1:IF
+reg								boss; //0: LSB, 1: IF
 reg 							type;
 reg	[`AddrBus]					startpos;
 reg [`InstLen]					len;
@@ -67,7 +67,6 @@ always @(posedge clk) begin
 					work<=`False;
 					mem_wr<=0;
 					mem_a<=`Null;
-					// $display("Mem WRITE SUCCESS! startpos: %h result: %h",startpos,data);
 				end
 				else begin
 					LSB_success<=`False;
