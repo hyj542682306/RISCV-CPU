@@ -147,7 +147,7 @@ always @(*) begin
 		else begin
 			LSB_S=`Disable;
 			RS_S=`Enable;
-			RS_pos<=RS_las_pos;
+			RS_pos=RS_las_pos;
 			RS_ready=RS_las_ready;
 			RS_ready_pos=RS_las_ready;
 		end
