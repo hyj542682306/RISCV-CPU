@@ -37,11 +37,10 @@ integer							i;
 
 //send the information of 'rs1' to Dispatch
 always @(*) begin
-	Dispatch_rs1_S=`Disable;
-	Dispatch_rs1_type=`Null;
-	Dispatch_rs1_value=`Null;
 	if (ID_rs1_S==`Disable) begin
 		Dispatch_rs1_S=`Disable;
+		Dispatch_rs1_type=`Null;
+		Dispatch_rs1_value=`Null;
 	end
 	else begin
 		Dispatch_rs1_S=`Enable;
@@ -64,11 +63,10 @@ end
 
 //send the information of 'rs2' to Dispatch
 always @(*) begin
-	Dispatch_rs2_S=`Disable;
-	Dispatch_rs2_type=`Null;
-	Dispatch_rs2_value=`Null;
 	if (ID_rs2_S==`Disable) begin
 		Dispatch_rs2_S=`Disable;
+		Dispatch_rs2_type=`Null;
+		Dispatch_rs2_value=`Null;
 	end
 	else begin
 		Dispatch_rs2_S=`Enable;

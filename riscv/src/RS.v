@@ -61,16 +61,6 @@ reg	[`AddrBus]					pc[`RSSize];
 integer							i,j,k;
 integer							BusyNum;
 
-//whether RS is full
-always @(*) begin
-	if (BusyNum==`SIZE) begin
-		RS_nxt_full=`True;
-	end
-	else begin
-		RS_nxt_full=`False;
-	end
-end
-
 //find the nxtpos and send it to Dispatch
 always @(*) begin
 	RS_nxt_pos=`Null;
@@ -106,20 +96,13 @@ always @(*) begin
 							RS_nxt_ready=`True;
 							RS_nxt_ready_pos=k;
 						end
-						else begin
-							RS_nxt_ready=`False;
-						end
 					end
 					`BEQ,`BNE,`BLT,`BGE,`BLTU,`BGEU,`ADD,`SUB,`SLL,`SLT,`SLTU,`XOR,`SRL,`SRA,`OR,`AND: begin
 						if (Tj[k]==1'b0&&Tk[k]==1'b0) begin
 							RS_nxt_ready=`True;
 							RS_nxt_ready_pos=k;
 						end
-						else begin
-							RS_nxt_ready=`False;
-						end
 					end
-					default: RS_nxt_ready=`False;
 				endcase
 			end
 		end
@@ -127,19 +110,13 @@ always @(*) begin
 end
 
 always @(posedge clk) begin
-	if (rst) begin
+	if (rst||clr) begin
 		ALU_S<=`Disable;
 		for (i=0;i<`SIZE;i=i+1) begin
 			Busy[i]<=`False;
 		end
 		BusyNum<=0;
-	end
-	else if (clr) begin
-		ALU_S<=`Disable;
-		for (i=0;i<`SIZE;i=i+1) begin
-			Busy[i]<=`False;
-		end
-		BusyNum<=0;
+		RS_nxt_full=`False;
 	end
 	else if (rdy) begin
 		//update the information from ALU
@@ -236,6 +213,7 @@ always @(posedge clk) begin
 		end
 
 		BusyNum<=BusyNum+Dispatch_S-Dispatch_ready;
+		RS_nxt_full=(BusyNum+Dispatch_S-Dispatch_ready==`SIZE);
 	end
 end
 

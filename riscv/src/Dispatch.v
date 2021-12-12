@@ -53,29 +53,18 @@ module Dispatch (
 );
 
 always @(*) begin
-	Dispatch_Op=`Null;
-	Dispatch_A=`Null;
-	Dispatch_rd=`Null;
-	Dispatch_Reorder=`Null;
-	Dispatch_pc=`Null;
-	Dispatch_Type_j=`Null;
-	Dispatch_Value_j=`Null;
-	Dispatch_Type_k=`Null;
-	Dispatch_Value_k=`Null;
-	Reg_writeQ_S=`Disable;
+	
 	RS_S=`Disable;
 	RS_pos=`Null;
-	RS_ready=`Null;
-	RS_ready_pos=`Null;
 	LSB_S=`Disable;
 	ROB_S=`Disable;
+
 	ROB_rs1_S=`Disable;
 	ROB_rs1_Reorder=`Null;
 	ROB_rs2_S=`Disable;
 	ROB_rs2_Reorder=`Null;
 	
 	if (Dispatch_S) begin
-		// $display("Dispatch INST: %b; PC: %h",Op,pc);
 		//Dispatch
 		Dispatch_Op=Op;
 		Dispatch_A=A;
@@ -86,7 +75,6 @@ always @(*) begin
 			if (rs1_type==1'b0) begin
 				Dispatch_Type_j=1'b0;
 				Dispatch_Value_j=rs1_value;
-				ROB_rs1_S=`Disable;
 			end
 			else begin
 				ROB_rs1_S=`Enable;
@@ -109,7 +97,6 @@ always @(*) begin
 			if (rs2_type==1'b0) begin
 				Dispatch_Type_k=1'b0;
 				Dispatch_Value_k=rs2_value;
-				ROB_rs2_S=`Disable;
 			end
 			else begin
 				ROB_rs2_S=`Enable;
@@ -156,19 +143,20 @@ always @(*) begin
 		ROB_S=`Enable;
 	end
 	else begin
-		//Reg
+		Dispatch_Op=`Null;
+		Dispatch_A=`Null;
+		Dispatch_rd=`Null;
+		Dispatch_Reorder=`Null;
+		Dispatch_pc=`Null;
+		Dispatch_Type_j=`Null;
+		Dispatch_Value_j=`Null;
+		Dispatch_Type_k=`Null;
+		Dispatch_Value_k=`Null;
+
 		Reg_writeQ_S=`Disable;
 
-		//RS
-		RS_S=`Disable;
 		RS_ready=RS_las_ready;
 		RS_ready_pos=RS_las_ready_pos;
-
-		//LSB
-		LSB_S=`Disable;
-
-		//ROB
-		ROB_S=`Disable;
 	end
 end
 

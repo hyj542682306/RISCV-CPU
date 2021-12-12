@@ -27,16 +27,12 @@ reg	[`IQBus]					tail;
 
 integer							qSize;
 
-//whether the IQ is empty or full
-always @(*) begin
-	IQ_full=(qSize==`SIZE);
-end
-
 always @(posedge clk) begin
 	if (rst||clr) begin
 		head<=0;
 		tail<=0;
 		qSize<=0;
+		IQ_full<=`False;
 		ID_S<=`Disable;
 	end
 	else if (rdy) begin
@@ -60,6 +56,7 @@ always @(posedge clk) begin
 		end
 
 		qSize<=qSize+IF_S-ID_Success;
+		IQ_full<=(qSize+IF_S-ID_Success==`SIZE);
 	end
 end
 

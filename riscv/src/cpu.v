@@ -206,6 +206,12 @@ Mem_ctrl  Mem_ctrl(
 );
 
 ALU ALU(
+  .clk(clk_in),
+  .rst(rst_in),
+  .rdy(rdy_in),
+
+  .clr(clr),
+
   //ALU
   .CDB_ALU_S(CDB_ALU_S),
   .CDB_ALU_Reorder(CDB_ALU_Reorder),

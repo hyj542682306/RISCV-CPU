@@ -1,4 +1,10 @@
 module ALU (
+	input  wire					clk,
+	input  wire					rst,
+	input  wire 				rdy,
+
+	input  wire					clr,
+
 	//ALU
 	output	reg  				CDB_ALU_S,
 	output	reg	[`ROBBus]		CDB_ALU_Reorder,
@@ -16,116 +22,118 @@ module ALU (
 	input  wire	[`AddrBus]		pc
 );
 
-always @(*) begin
-	CDB_ALU_Reorder=`Null;
-	CDB_ALU_Value=`Null;
-	CDB_ALU_Jump_S=`Disable;
-	CDB_ALU_Jump=`Null;
-	if (ALU_S==`Disable) begin
-		CDB_ALU_S=`Disable;
+always @(posedge clk) begin
+	if (rst||clr) begin
+		CDB_ALU_S<=`Disable;
+		CDB_ALU_Jump_S<=`Disable;
 	end
-	else begin
-		CDB_ALU_S=`Enable;
-		CDB_ALU_Reorder=Reorder;
-		case (Op)
+	else if (rdy) begin
+		if (ALU_S==`Disable) begin
+			CDB_ALU_S<=`Disable;
+		end
+		else begin
+			CDB_ALU_S<=`Enable;
+			CDB_ALU_Reorder<=Reorder;
+			case (Op)
 
-			`LUI: CDB_ALU_Value=A;
+				`LUI: CDB_ALU_Value<=A;
 
-			`AUIPC: CDB_ALU_Value=pc+A;
+				`AUIPC: CDB_ALU_Value<=pc+A;
 
-			`JAL: begin
-				CDB_ALU_Value=pc+3'b100;
-				CDB_ALU_Jump_S=`Enable;
-				CDB_ALU_Jump=pc+A;
-			end
-
-			`JALR: begin
-				CDB_ALU_Value=pc+3'b100;
-				CDB_ALU_Jump_S=`Enable;
-				CDB_ALU_Jump=(Vj+A)&~1'b1;
-			end
-
-			`BEQ: begin
-				if (Vj==Vk) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`JAL: begin
+					CDB_ALU_Value<=pc+3'b100;
+					CDB_ALU_Jump_S<=`Enable;
+					CDB_ALU_Jump<=pc+A;
 				end
-			end
 
-			`BNE: begin
-				if (Vj!=Vk) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`JALR: begin
+					CDB_ALU_Value<=pc+3'b100;
+					CDB_ALU_Jump_S<=`Enable;
+					CDB_ALU_Jump<=(Vj+A)&~1'b1;
 				end
-			end
 
-			`BLT: begin
-				if ($signed(Vj)<$signed(Vk)) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`BEQ: begin
+					if (Vj==Vk) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
 				end
-			end
 
-			`BGE: begin
-				if ($signed(Vj)>=$signed(Vk)) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`BNE: begin
+					if (Vj!=Vk) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
 				end
-			end
 
-			`BLTU: begin
-				if (Vj<Vk) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`BLT: begin
+					if ($signed(Vj)<$signed(Vk)) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
 				end
-			end
 
-			`BGEU: begin
-				if (Vj>=Vk) begin
-					CDB_ALU_Jump_S=`Enable;
-					CDB_ALU_Jump=pc+A;
+				`BGE: begin
+					if ($signed(Vj)>=$signed(Vk)) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
 				end
-			end
 
-			`ADDI: CDB_ALU_Value=Vj+A;
+				`BLTU: begin
+					if (Vj<Vk) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
+				end
 
-			`SLTI: CDB_ALU_Value=$signed(Vj)<$signed(A);
+				`BGEU: begin
+					if (Vj>=Vk) begin
+						CDB_ALU_Jump_S<=`Enable;
+						CDB_ALU_Jump<=pc+A;
+					end
+				end
 
-			`SLTIU: CDB_ALU_Value=Vj<A;
+				`ADDI: CDB_ALU_Value<=Vj+A;
 
-			`XORI: CDB_ALU_Value=Vj^A;
+				`SLTI: CDB_ALU_Value<=$signed(Vj)<$signed(A);
 
-			`ORI: CDB_ALU_Value=Vj|A;
+				`SLTIU: CDB_ALU_Value<=Vj<A;
 
-			`ANDI: CDB_ALU_Value=Vj&A;
+				`XORI: CDB_ALU_Value<=Vj^A;
 
-			`SLLI: CDB_ALU_Value=Vj<<A[5:0];
+				`ORI: CDB_ALU_Value<=Vj|A;
 
-			`SRLI: CDB_ALU_Value=Vj>>A[5:0];
+				`ANDI: CDB_ALU_Value<=Vj&A;
 
-			`SRAI: CDB_ALU_Value=$signed(Vj)>>A[5:0];
+				`SLLI: CDB_ALU_Value<=Vj<<A[5:0];
 
-			`ADD: CDB_ALU_Value=Vj+Vk;
+				`SRLI: CDB_ALU_Value<=Vj>>A[5:0];
 
-			`SUB: CDB_ALU_Value=Vj-Vk;
+				`SRAI: CDB_ALU_Value<=$signed(Vj)>>A[5:0];
 
-			`SLL: CDB_ALU_Value=Vj<<Vk[5:0];
+				`ADD: CDB_ALU_Value<=Vj+Vk;
 
-			`SLT: CDB_ALU_Value=$signed(Vj)<$signed(Vk);
+				`SUB: CDB_ALU_Value<=Vj-Vk;
 
-			`SLTU: CDB_ALU_Value=Vj<Vk;
+				`SLL: CDB_ALU_Value<=Vj<<Vk[5:0];
 
-			`XOR: CDB_ALU_Value=Vj^Vk;
+				`SLT: CDB_ALU_Value<=$signed(Vj)<$signed(Vk);
 
-			`SRL: CDB_ALU_Value=Vj>>Vk[5:0];
+				`SLTU: CDB_ALU_Value<=Vj<Vk;
 
-			`SRA: CDB_ALU_Value=$signed(Vj)>>Vk[5:0];
+				`XOR: CDB_ALU_Value<=Vj^Vk;
 
-			`OR: CDB_ALU_Value=Vj|Vk;
+				`SRL: CDB_ALU_Value<=Vj>>Vk[5:0];
 
-			`AND: CDB_ALU_Value=Vj&Vk;
+				`SRA: CDB_ALU_Value<=$signed(Vj)>>Vk[5:0];
 
-		endcase
+				`OR: CDB_ALU_Value<=Vj|Vk;
+
+				`AND: CDB_ALU_Value<=Vj&Vk;
+
+			endcase
+		end
 	end
 end
 
