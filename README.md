@@ -27,7 +27,7 @@ WNS: -3.315ns
 ## Structure
 
 ```
-📦CPU
+📦RISCV-CPU
  ┣ 📂img                                    Some images
  ┣ 📂src                                    My code
  ┃ ┣ 📂common                               Provided UART and RAM
